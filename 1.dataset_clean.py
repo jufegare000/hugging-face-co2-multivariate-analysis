@@ -1,12 +1,12 @@
 import pandas as pd
 import ast
 
-def preprocess_huggingface_data_final_v9(input_path='HFCO2.csv'):
+def preprocess_data(input_path='HFCO2.csv'):
     print(f"🔄 Processing dataset: {input_path}")
 
     data_frame = read_file(input_path)
-    extract_performance_metrics(data_frame)
-    convert_types(data_frame)
+    data_frame = extract_performance_metrics(data_frame)
+    data_frame = convert_types(data_frame)
     save_cvs(data_frame)
 
 def read_file(input_path):
@@ -70,4 +70,4 @@ def save_cvs(data_frame, output_path='HFCO2_preprocessed.csv'):
 
 
 if __name__ == '__main__':
-    preprocess_huggingface_data_final_v9()
+    preprocess_data()
