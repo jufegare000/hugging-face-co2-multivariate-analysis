@@ -1,6 +1,110 @@
-HFCO2Total.csv
-.idea
-.ipynb_checkpoints
-HFTotal.csv
-HFTotalProcessed.csv
+# Python
+# ==============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+eggs/
+*.egg-info/
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-log.log
+
+# Unit test / coverage reports
+.coverage
+.tox/
+.nox/
+
+# PyInstaller
+#  (https://www.pyinstaller.org/en/stable/usage.html#supporting-version-control-systems)
+*.spec
+
+# Jupyter Notebooks
+# ==============================================================================
+.ipynb_checkpoints/
+# Ignora los datos de metadatos de los notebooks que cambian con frecuencia.
+# Aunque no siempre es recomendable, puede ser útil si se trabaja en un equipo.
+# git config --global --add diff.ipynb.textconv cat
+# git config --global --add diff.ipynb.binary true
+
+# Environments
+# ==============================================================================
+# Virtual environments
+.env/
+venv/
+env/
+/venv
+/env
+.venv/
+.venv
+
+# Conda environment
+.conda/
+conda-bld/
+
+# MyPy
+.mypy_cache/
+
+# Pytest
+.pytest_cache/
+
+# OS-specific
+# ==============================================================================
+.DS_Store
+Thumbs.db
+
+# IDEs and Editors
+# ==============================================================================
+# Visual Studio Code
+.vscode/
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*.swn
+*.swnm
+
+# Spyder
+.spyderproject
+.spyderproject.ini
+.spyderproject.backup
+.spyderproject.bak
+
+# Others
+# ==============================================================================
+# Logs
+*.log
+logs/
+
+# Data
+# Generalmente, los archivos de datos no deben ser rastreados por Git si son grandes o se regeneran.
+# data/
+# *.csv
+# *.json
+# *.pkl
+# *.parquet
+# *.hdf5
+
+notebooks/.ipynb_checkpoints/
+assets/.ipynb_checkpoints/
+
+assets/HFCO2_preprocessed.csv
+assets/HFCO2_imputed.csv
+src/HFClean.csv
+src/HFCO2_preprocessed.csv
