@@ -1,7 +1,7 @@
 import pandas as pd
 import ast
 import numpy as np
-from sklearn.impute import KNNImputer  # Importamos la nueva librería
+from sklearn.linear_model import LinearRegression
 
 class DataSetClean():
     def preprocess_data(self, input_path='../assets/HFCO2.csv'):
@@ -25,7 +25,7 @@ class DataSetClean():
             'modelId', 'datasets', 'co2_reported', 'created_at', 'library_name',
             'performance_metrics', 'datasets_size',
             'datasets_size_efficency', 'performance_score', 'environment',
-            'training_type', 'source', 'geographical_location', 'domain'
+            'training_type', 'source', 'geographical_location', 'domain', 'auto'
         ]
         data_frame = data_frame.drop(columns=columns_to_drop, errors='ignore')
         data_frame = self.clean_columns(data_frame)
@@ -46,19 +46,36 @@ class DataSetClean():
         df_cleaned = data_frame[mask]
 
         df_cleaned.dropna(subset=['size_efficency'], inplace=True)
-        df_imputed = self.impute_data(df_cleaned)
+        df_imputed = self.impute_regression_numerical(df_cleaned)
         return df_imputed
 
-    def impute_data(self, df):
-        columns_to_impute = ['size', 'size_efficency']
+    def impute_regression_numerical(self, data_frame):
 
-        df_imputed = df.copy()
+        df = data_frame.copy()
 
-        imputer = KNNImputer(n_neighbors=5)
+        variables_to_impute = ['size', 'size_efficency']
 
-        df_imputed[columns_to_impute] = imputer.fit_transform(df_imputed[columns_to_impute])
+        for target_column in variables_to_impute:
+            if df[target_column].isnull().any():
+                print(f"Imputando valores faltantes en la columna: {target_column}")
 
-        return df_imputed
+                df_train = df.dropna(subset=[target_column])
+                df_to_impute = df[df[target_column].isnull()]
+
+                predictor_columns = [col for col in df.columns if col not in variables_to_impute]
+
+                X_train = df_train[predictor_columns]
+                y_train = df_train[target_column]
+
+                X_to_impute = df_to_impute[predictor_columns]
+
+                model = LinearRegression()
+                model.fit(X_train, y_train)
+
+                predicted_values = model.predict(X_to_impute)
+                df.loc[df[target_column].isnull(), target_column] = predicted_values
+
+        return df
 
     def parse_single_dict_metrics_robust(self, metric_string):
         try:

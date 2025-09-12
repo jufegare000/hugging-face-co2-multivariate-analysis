@@ -2,7 +2,7 @@ import pandas as pd
 
 preprocessed_datafile = '../assets/HFCO2.csv'
 
-class CovarianceUtils():
+class CorrelationAnalysisUtils():
     def covariances_and_correlations(self):
         try:
             data_frame = pd.read_csv(preprocessed_datafile)
