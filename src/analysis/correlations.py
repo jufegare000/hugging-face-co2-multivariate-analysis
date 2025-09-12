@@ -1,6 +1,6 @@
 import pandas as pd
 
-preprocessed_datafile = '../assets/HFCO2_preprocessed.csv'
+preprocessed_datafile = '../assets/HFCO2.csv'
 
 class CovarianceUtils():
     def covariances_and_correlations(self):
@@ -23,12 +23,19 @@ class CovarianceUtils():
         return data_frame.corr()
 
     def convert_categorical(self, data_frame):
-        data_frame = pd.get_dummies(data_frame, columns=['training_type'], drop_first=True, dtype=int)
-        data_frame = pd.get_dummies(data_frame, columns=['training_type'], drop_first=True, dtype=int)
-        data_frame = pd.get_dummies(data_frame, columns=['training_type'], drop_first=True, dtype=int)
+        categorical_columns = ['training_type', 'source', 'geographical_location', 'domain']
+
+        data_frame = pd.get_dummies(data_frame, columns=categorical_columns, drop_first=True)
         return data_frame
 
     def get_data_frame(self, preprocessed_datafile):
         data_frame = pd.read_csv(preprocessed_datafile)
-        data_frame = pd.get_dummies(data_frame, columns=['training_type'], drop_first=True, dtype=int)
+        data_frame.columns.str.strip()
+        columns_to_drop = [
+            'modelId', 'datasets', 'co2_reported', 'created_at', 'library_name',
+            'performance_metrics', 'datasets_size',
+            'datasets_size_efficency', 'performance_score', 'environment',
+            'training_type', 'source', 'geographical_location', 'domain'
+        ]
+        data_frame = data_frame.drop(columns=columns_to_drop, errors='ignore')
         return data_frame
