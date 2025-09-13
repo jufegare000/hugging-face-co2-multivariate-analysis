@@ -1,5 +1,5 @@
 # hugging-face-co2-multivariate-analysis
-# Análisis de la Huella de Carbono en Modelos de Machine Learning
+# Análisis multivariado de emisión de CO2 de modelos de IA
 
 ## 🎯 Objetivo del Proyecto
 
@@ -9,7 +9,7 @@ Este repositorio contiene un análisis estadístico multivariado sobre los facto
 
 El análisis explora la relación entre las emisiones de CO2 y diversas variables como el tamaño del modelo, el tamaño del dataset y las métricas de rendimiento. Se utilizaron las siguientes técnicas:
 
-**Preprocesamiento y Limpieza de Datos:** Scripts en Python (usando Pandas) para transformar el dataset crudo en un formato numérico y analizable.
+**Preprocesamiento y Limpieza de Datos:** Scripts en Python (usando Pandas y numpy) para transformar el dataset crudo en un formato numérico y analizable.
 
 **Análisis de Correlación:** Cálculo y visualización de la matriz de correlación para identificar las relaciones lineales más fuertes entre las variables.
 
@@ -19,14 +19,23 @@ El análisis explora la relación entre las emisiones de CO2 y diversas variable
 
 ## 📂 Contenido del Repositorio
 
-**/data**: Contiene el dataset original (HFCO2.csv), el archivo preprocesado y los resultados de las matrices (correlation_matrix.csv).
+**/assets**: Contiene el dataset original (HFCO2.csv), el archivo preprocesado y los resultados de las matrices.
 
-**/scripts**: Incluye los scripts de Python utilizados para la limpieza de datos y la ejecución de los análisis estadísticos.
+**/notebooks**: Incluye los notebooks de jupyter en Python utilizados para el análisis estadísticos.
 
-**/results**: Almacena las visualizaciones generadas, como el mapa de calor de correlaciones.
+**/src**: Almacena los scripts útiles necesarios para la ejecución del análisis estadístico, para eviar colocar funcciones que sólo agregan ruido al análisis.
 
 README.md: Esta descripción del proyecto.`
 
-## 結論 Conclusiones Principales
+## Dependencias
+Las dependencias apra porder correr el proyecto se encuentran en [requirements.txt](requirements.txt) para correr el proyecto 
+es necesario usar la versión de **Python 3.11.13**  **jupyter notebook 7.4.5**
 
-El análisis revela una fuerte correlación positiva entre las emisiones de CO2 y variables como el **tamaño del modelo** y el **tamaño del dataset**, confirmando que los modelos más grandes y complejos tienden a tener un mayor impacto ambiental.
+para instalar las dependencias se usa el comando: 
+```bash 
+pip install -r requirements.txt
+```
+
+## Reporte del proyecto
+El resultado del análisis puede verse en la siguiente ruta:
+[Multivariated_Data_Analysis.pdf](assets/Multivariated_Data_Analysis.pdf)
