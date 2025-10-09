@@ -107,6 +107,9 @@ assets/.ipynb_checkpoints/
 assets/HFCO2_preprocessed.csv
 assets/HFCO2_imputed.csv
 assets/HFCO2_cleaned_and_imputed.csv
+assets/huggingface_co2_clean.csv
+assets/huggingface_co2_clean_pm.csv
+assets/huggingface_with_fairness.csv
 src/HFClean.csv
 src/HFCO2_preprocessed.csv
 src/HFCO2_c
