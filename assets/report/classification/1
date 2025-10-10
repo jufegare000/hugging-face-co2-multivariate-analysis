@@ -1,0 +1,93 @@
+-- =================================================================
+-- CONFIGURACIÓN PRINCIPAL DE NEOVIM: BOOTSTRAP DE LAZY.NVIM Y PLUGINS
+-- =================================================================
+
+-- 1. BOOTSTRAP DE LAZY.NVIM
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable",
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
+
+-- 2. DEFINICIÓN DE PLUGINS (LATEX Y GRAMÁTICA)
+local plugins = {
+  -- VIMTEX: SOPORTE LATEX PRINCIPAL (SINTAXIS, COMPILACIÓN)
+  {
+    'lervag/vimtex',
+    lazy = false, -- Cargar inmediatamente
+    ft = 'tex',   -- Solo cargar para archivos .tex
+    config = function()
+      vim.g.vimtex_compiler_method = 'latexmk'
+      -- Cambia 'skim' por tu visor de PDF preferido (ej. 'zathura', 'sumatra', etc.)
+      vim.g.vimtex_view_method = 'skim' 
+    end,
+  },
+
+  -- MASON: INSTALADOR DE SERVIDORES LSP
+  {
+    'williamboman/mason.nvim',
+    cmd = "Mason",
+    config = function()
+      require('mason').setup()
+      -- Asegura que los servidores necesarios (ltex y texlab) se instalen automáticamente
+      require('mason-lspconfig').setup({
+          ensure_installed = { 'ltex', 'texlab' },
+      })
+      require('lspconfig').ltex.setup({
+        settings = {
+        	ltex = {
+            		enabled = { "latex", "tex" },
+            		language = "en-US", -- <--- Idioma Inglés de EE. UU.
+            		diagnosticSeverity = "information",
+        		},
+        },
+    })
+    end,
+  },
+  
+  -- NVIM-LSPCONFIG: GESTIÓN DE SERVIDORES LSP
+  {
+    'neovim/nvim-lspconfig',
+    dependencies = { 'williamboman/mason-lspconfig.nvim' },
+    config = function()
+      -- Configura el LSP de LATEX (Texlab) para autocompletado y referencias
+      require('lspconfig').texlab.setup({})
+
+      -- Configura el LSP de GRAMÁTICA (LTeX)
+      require('lspconfig').ltex.setup({
+        settings = {
+          ltex = {
+            -- Habilita el chequeo para archivos .tex y .latex
+            enabled = { "latex", "tex" },
+            -- Idioma de corrección: Inglés de EE. UU.
+            language = "en-US", 
+            diagnosticSeverity = "information",
+          },
+        },
+      })
+    end,
+  },
+}
+
+
+-- 3. CARGA DE LAZY.NVIM
+require("lazy").setup(plugins, {
+  -- Opciones globales de Lazy
+  defaults = {
+    lazy = true,
+  },
+})
+
+-- INSTALACIÓN AUTOMÁTICA
+require('mason-lspconfig').setup({
+    ensure_installed = { 'ltex', 'texlab' }, -- <--- 'ltex' es tu checker de gramática
+})
+
