@@ -107,20 +107,20 @@ class PreClusterUtils():
             ]
 
             choices = [
-                'tipo1 (accuracy & f1)',
-                'tipo2 (rouge)',
-                'tipo3 (solo accuracy)',
-                'tipo4 (solo f1)',
-                'tipo5 (solo rouge1)',
-                'tipo6 (solo rougeL)',
+                'type1 (accuracy & f1)',
+                'type2 (rouge)',
+                'type3 (accuracy)',
+                'type4 (f1)',
+                'type5 (rouge1)',
+                'type6 (rougeL)',
             ]
 
             # 5. Aplicar la clasificación.
-            df['tipo_modelo'] = np.select(conditions, choices, default='indefinido_o_mixto')
+            df['model_type'] = np.select(conditions, choices, default='undefined')
 
             # 6. Mostrar el resumen.
             print("\n📊 Conteo de modelos por tipo (clasificación detallada):")
-            print(df['tipo_modelo'].value_counts())
+            print(df['model_type'].value_counts())
 
             # 7. Guardar el resultado.
             df.to_csv(output_filepath, index=False)
