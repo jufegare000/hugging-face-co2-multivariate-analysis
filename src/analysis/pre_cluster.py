@@ -11,7 +11,6 @@ class PreClusterUtils():
             return x
         if pd.isna(x):
             return np.nan
-        # Normaliza a str
         s = str(x).strip()
         if s == "" or s.lower() in {"nan", "none", "null"}:
             return np.nan
@@ -60,43 +59,26 @@ class PreClusterUtils():
         df_final.to_csv("../../assets/huggingface_co2_clean.csv", index=False)
 
     def categorize_model_type_detailed(self, input_filepath, output_filepath):
-        """
-        Carga un archivo CSV y lo categoriza en múltiples tipos según las
-        métricas de rendimiento que posee cada fila, priorizando las
-        combinaciones de métricas sobre las métricas únicas.
-        """
         try:
-            # 1. Cargar el dataset.
             df = pd.read_csv(input_filepath)
             print(f"📄 Archivo '{input_filepath}' cargado con {len(df)} filas.")
 
-            # 2. Crear máscaras booleanas para cada métrica individual.
-            # Esto hace el código más legible y reutilizable.
             has_accuracy = df['pm_accuracy'].notna()
             has_f1 = df['pm_f1'].notna()
             has_rouge1 = df['pm_rouge1'].notna()
             has_rougeL = df['pm_rougeL'].notna()
 
-            # 3. Definir las condiciones en orden de prioridad (de más a menos específico).
-            # Primero las combinaciones que ya definimos.
             condicion_tipo1 = has_accuracy & has_f1
             condicion_tipo2 = has_rouge1 & has_rougeL
 
-            # Ahora las condiciones para métricas únicas.
-            # Para que sea "solo" accuracy, las otras 3 deben ser nulas.
             condicion_tipo3 = has_accuracy & ~has_f1 & ~has_rouge1 & ~has_rougeL
 
-            # Para que sea "solo" f1, las otras 3 deben ser nulas.
             condicion_tipo4 = has_f1 & ~has_accuracy & ~has_rouge1 & ~has_rougeL
 
-            # Para que sea "solo" rouge1, las otras 3 deben ser nulas.
             condicion_tipo5 = has_rouge1 & ~has_accuracy & ~has_f1 & ~has_rougeL
 
-            # Para que sea "solo" rougeL, las otras 3 deben ser nulas.
             condicion_tipo6 = has_rougeL & ~has_accuracy & ~has_f1 & ~has_rouge1
 
-            # 4. Crear la lista de condiciones y etiquetas para np.select.
-            # El orden aquí es CRUCIAL. np.select usa la primera condición que sea True.
             conditions = [
                 condicion_tipo1,
                 condicion_tipo2,
