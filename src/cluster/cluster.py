@@ -313,7 +313,6 @@ def _fairness_stats_from_tab(tab: pd.DataFrame) -> dict:
         "fair_chi2": np.nan,
         "fair_pval_chi2": np.nan,
         "fair_v_cramer": np.nan,
-        "fair_pval_fisher": np.nan,
     }
     if tab is None or tab.empty:
         return out
@@ -332,9 +331,7 @@ def _fairness_stats_from_tab(tab: pd.DataFrame) -> dict:
         out["fair_pval_chi2"] = float(pval)
         n = counts.values.sum()
         out["fair_v_cramer"] = float(np.sqrt(chi2 / (n * (min(counts.shape) - 1)))) if n > 0 else np.nan
-        if counts.shape == (2, 2):
-            _, p_fisher = fisher_exact(counts.values)
-            out["fair_pval_fisher"] = float(p_fisher)
+
     return out
 
 # ------------------
@@ -365,7 +362,6 @@ def run_pipeline(csv_path: str = CSV_PATH, top_n: int = 10):
             "fair_chi2": np.nan,
             "fair_pval_chi2": np.nan,
             "fair_v_cramer": np.nan,
-            "fair_pval_fisher": np.nan,
         }
         ext_paths = save_external_tables(ext_tabs, cfg)
 
@@ -394,7 +390,7 @@ def run_pipeline(csv_path: str = CSV_PATH, top_n: int = 10):
         fair_cols = [
             "config","distance","linkage","k","threshold","silhouette","cophenetic",
             "ari_vs_is_fair","ari_reason","fair_pureza_media","fair_pureza_ponderada",
-            "fair_pval_chi2","fair_v_cramer","fair_pval_fisher"
+            "fair_pval_chi2","fair_v_cramer"
         ]
         fairness_path = os.path.join(OUTPUT_DIR, "resumen_fairness.csv")
         res_df[fair_cols].to_csv(fairness_path, index=False)

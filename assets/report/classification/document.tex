@@ -12,9 +12,9 @@
 \usepackage[T1]{fontenc}
 \usepackage{booktabs,siunitx,makecell,multirow,tabularx}
 \sisetup{
-	round-mode=places,round-precision=3,
-	group-separator={\,}, group-minimum-digits=4,
-	table-number-alignment = center
+	group-separator = {\,},   
+	group-minimum-digits = 4,
+	output-decimal-marker = {.}
 }
 % --- Configuración de documentos y metadatos ---
 \title{ CO$_{2}$ classification analysis for AI models}
@@ -60,14 +60,9 @@
 
 	\subsection{Cluster analysis}
 	\label{methodology:cluanal}
-	A hierarchical clustering analysis was applied to segment AI models using numeric performance-and-cost variables, which were first standardized to z-scores.
-	Distances (Euclidean, Mahalanobis) and linkage methods (Ward, average, complete, single) were compared, producing multiple dendrograms.
-	The tree cut was defined either by a target k or by the k that maximized silhouette, and the equivalent distance threshold was recorded.
-	Internal quality was assessed with the silhouette score, and dendrogram fidelity with the cophenetic correlation.
-	External labels (is\_fair, fairness class, model type) were not used for training; instead, they were used for validation via contingency tables, $\chi$$^2$/Cramér’s V, Fisher’s exact test (when 2×2), and ARI.
-	Group interpretation was conducted from cluster profiles in original units and z-centroids, highlighting variables with the greatest discriminative power.
-	A comparative summary by configuration was assembled, and visualizations (dendrograms, stacked bars, heatmaps) were produced for quick review.
-	Final configuration selection was guided primarily by silhouette, complemented by cophenetic and consistency with external labels.
+	A hierarchical clustering analysis was applied to segment AI models using numeric performance-and-cost variables. Records with N/A/$\infty$ were removed and features were were standardized to z-scores, to mitigate dominance of high skewed counts in features like \texttt{downloads} and \texttt{likes}, simple transformation (log/winsorzing) were considered. Two distances were evaluated: Euclidean and Mahalanobis, the latter computed with a Ledoit-Wold covariance estimator. Four linkage rules (Ward, average, complete and single) were compared.
+	The dendogram was cut either at a target k (k $\in{\{3,4\}}$) to improve size balance or at the k that maximized the average silhouette; the equivalent distance threshold reproducing that partition was also recorded. Internal quality was assessed with the silhouette score, while cophenetic correlation was used descriptively to gauge dendogram fidelity. As external validation, labels (\texttt{is\_fair}, \texttt{fairness\_class}, \texttt{model\_type}) were not used for training and were cotrasted post-hoc via contingency tables, $\chi$²/Crammer's V, and adjusted Rand index.
+	Cluster interpretation relied on profiles in original units and on z-centroids; a |z| ranking highlighted the most discriminative variables. A comparative summary across configurations (metrics, thresholds, balance) and visualizations (dedongrams with horizontal cut, stacked proportions and heatmaps) were produced for review.Final selection prioritized overall separability and operational usefulness, balancing silhouette with stability, cluster-size balance and consistency with external labels. 
 
 	\subsection{Análisis de varianza y covarianza}
 	\label{ssec:pca}
@@ -195,63 +190,122 @@
 	 Those classifications are required for the next step in the methodology, Cluster analysis.
 
 
-	\subsection{Cluser Analysis}
-	After applying the model to dataset, the analysis throws the following results:
-	Across robust configurations, the solution consistently converged to \textbf{k=2} the best variants were Average-(Eclidean/Mahalanobis)  with $ silhouette \approx 9.5$. \textit{Ward-Euclidean} showed high silhouette but lower cophenetic.
-	The following figure shows results:
-		\begin{figure}[H]
-		\centering
-		\includegraphics[width=0.8\columnwidth]{assets/1_coph_vs_silhouette.png}
-		\caption{Top-right indicates higher dendrogram fidelity and cluster separation.}
-		\label{fig:coph_vs_silhouette}
-	\end{figure}
-	Cutting at \textbf{k=2} maximidez the silhouette. The reported equivalent distance threshold reproduces the same partition in the dendogram 
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=0.8\columnwidth]{assets/2_dendogram_avg_euc.png}
-		\caption{Dendrogram of the winning configuration (one figure).
-			Caption: “Horizontal cut at the equivalent threshold yields k = 2}
-		\label{fig:dendogram_avg_eucl}
-	\end{figure}
-	A minor cluster (very small N) concentrates very high downloads/likes/performance and lower size/$\text{CO}_2$, versus major cluster near the global mean('catalog' segment). The most discriminative variable is downloads, followed by likes.
-	Results are showed in the following tables
-	
+\subsection{Cluster Analysis}
+
+A grid over \emph{distance} $\times$ \emph{linkage} found that the highest internal separation was achieved by
+\textbf{Single–Euclidean} with \textbf{$k=3$} (silhouette $\approx 0.62$, cophenetic $\approx 0.71$). Close contenders were
+\emph{Complete–Mahalanobis} ($k=3$, silhouette $\approx 0.52$, cophenetic $\approx 0.71$) and
+\emph{Average–Mahalanobis} ($k=3$, silhouette $\approx 0.43$, cophenetic $\approx 0.81$).
+Among the “non-single” options, \textbf{Average–Euclidean} with \textbf{$k=4$} offered a more conservative structure
+(silhouette $\approx 0.34$, cophenetic $\approx 0.81$). \emph{Ward–Euclidean} showed the lowest separation
+(silhouette $\approx 0.20$, cophenetic $\approx 0.44$).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\columnwidth]{assets/1_coph_vs_silhouette.png}
+	\caption{Cophenetic vs.\ silhouette for all configurations. Top-right indicates better fidelity and separation.}
+	\label{fig:coph_vs_silhouette}
+\end{figure}
+
+Because \emph{single} linkage may form chaining clusters, we report two complementary views:
+(i) the best-silhouette solution (\textbf{Single–Euclid, $k=3$}) and (ii) a robust alternative without single linkage
+(\textbf{Average–Euclid, $k=4$}). The horizontal cut at the recorded equivalent threshold reproduces the same $k$ in the
+dendrogram.
+
+\begin{figure}[H]
+	\centering
+	% Replace with the dendrogram you want as the main figure
+	\includegraphics[width=0.8\columnwidth]{assets/4_dendogram_single.png}
+	\caption{Dendrogram—Single–Euclidean. The horizontal cut at the equivalent threshold yields $k=3$.}
+	\label{fig:dendro_single_euclid}
+\end{figure}
+
+Across configurations, a \emph{dominant} “catalog” cluster concentrates the bulk of models near global means, while
+1–3 \emph{small} “elite” clusters group items with markedly higher \emph{downloads/likes/performance} and (on average)
+lower \emph{size/CO\textsubscript{2}}. Variable importance from $z$–centroids is consistent: the most discriminative
+feature is \textbf{downloads} (max $|z|\approx 5.39$), followed by \textbf{likes} ($\approx 2.03$), then
+\emph{CO\textsubscript{2}} and \emph{performance} (moderate), with \emph{size} contributing less ($\approx 1.32$).
+
+External validation against labels was limited, as expected (labels were not used to train the clustering):
+ARI vs.\ \texttt{is\_fair} stayed near zero across settings; however, cluster–label contingency showed reasonable
+purities (mean $\sim 0.73$–$0.90$ depending on the configuration), with \texttt{is\_fair=True} enriched in one of the small
+clusters and scarce in the large catalog group.
+
+% --- Suggested figures for the chosen config ---
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\columnwidth]{assets/3_is_fair_per_cluster.png}
+	\caption{Stacked proportions of \texttt{is\_fair} per cluster (Average–Euclid, $k=4$).}
+	\label{fig:isfair_stacked}
+\end{figure}
+
+
+\paragraph{Cluster profiles.}
+Tables~\ref{tab:profile-a}–\ref{tab:profile-b} report \emph{original-unit} profiles (count/mean/median) for
+\textit{performance\_score}, \textit{co2\_eq\_emissions}, \textit{likes}, \textit{downloads} and \textit{size}. For brevity,
+we include the robust alternative (\emph{Average–Euclid, $k=4$}); the $z$–centroids and the $|z|$ ranking (downloads $\to$ likes)
+appear in the Supplement.
+\begin{table}[t]
+	\centering
+	\small
+	\caption{Cluster profiles (original units): performance and CO$_2$}
+	\label{tab:profile-a}
+	\renewcommand{\arraystretch}{1.1}
+	\begin{tabular}{l S[table-format=4.0] S[table-format=1.3] S[table-format=1.3]
+			S[table-format=2.3] S[table-format=1.3]}
+		\toprule
+		& \multicolumn{3}{c}{\textbf{performance\_score}}
+		& \multicolumn{2}{c}{\textbf{co2\_eq\_emissions}} \\
+		\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+		\textbf{cluster} & \textbf{n} & \textbf{mean} & \textbf{median}
+		& \textbf{mean} & \textbf{median} \\
+		\midrule
+		1 & 4    & 0.988 & 0.991 & 49.974 & 3.189 \\
+		2 & 1029 & 0.727 & 0.822 & 71.382 & 2.749 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
 
 \begin{table}[t]
 	\centering
-	\caption{Cluster profiles (original units) — Transposed}
-	\label{tab:profile-transposed}
-	\setlength{\tabcolsep}{4pt}
-	\begin{tabular}{l l S[table-format=4.0] S[table-format=4.0]}
+	\small
+	\caption{Cluster profiles (original units): likes and downloads}
+	\label{tab:profile-b}
+	\renewcommand{\arraystretch}{1.1}
+	\begin{tabular}{
+			l
+			S[table-format=4.0]        % n
+			S[table-format=1.3]        % likes mean
+			S[table-format=1.3]        % likes median
+			S[table-format=6.2]        % downloads mean
+			S[table-format=7.2]        % downloads median
+		}
 		\toprule
-		\multirow{2}{*}{Variable} & \multirow{2}{*}{Estadístico} & \multicolumn{2}{c}{Cluster} \\
-		\cmidrule(lr){3-4}
-		& & {1} & {2} \\
+		& \multicolumn{3}{c}{\textbf{likes}}
+		& \multicolumn{2}{c}{\textbf{downloads}} \\
+		\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+		\textbf{cluster} & \textbf{n} & \textbf{mean} & \textbf{median}
+		& \textbf{mean} & \textbf{median} \\
 		\midrule
-		\multirow{3}{*}{performance\_score}
-		& count  & 4   & 1029 \\
-		& mean   & 0.988 & 0.727 \\
-		& median & 0.991 & 0.822 \\
-		\addlinespace
-		\multirow{3}{*}{co2\_eq\_emissions}
-		& count  & 4   & 1029 \\
-		& mean   & 49.974 & 71.382 \\
-		& median & 3.189 & 2.749 \\
-		\addlinespace
-		\multirow{3}{*}{likes}
-		& count  & 4   & 1029 \\
-		& mean   & 2.250 & 0.181 \\
-		& median & 0.5 & 0.0 \\
-		\addlinespace
-		\multirow{3}{*}{downloads}
-		& count  & 4   & 1029 \\
-		& mean   & 104439.25 & 65.245 \\
-		& median & 102572.5 & 5.0 \\
-		\addlinespace
-		\multirow{3}{*}{size}
-		& count  & 4   & 1029 \\
-		& mean   & 2.649e8 & 8.953e8 \\
-		& median & 2.654e8 & 4.987e8 \\
+		1 & 4    & 2.250 & 0.500 & \num{104439.25} & \num{102572.50} \\
+		2 & 1029 & 0.181 & 0.000 & \num{65.245}    & \num{5.00} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+\begin{table}[t]
+	\centering
+	\small
+	\caption{Cluster profiles (original units): size ($\times 10^{8}$)}
+	\label{tab:profile-c}
+	\renewcommand{\arraystretch}{1.1}
+	\begin{tabular}{l S[table-format=4.0] S[table-format=1.3] S[table-format=1.3]}
+		\toprule
+		\textbf{cluster} & \textbf{n} & \textbf{mean} & \textbf{median} \\
+		\midrule
+		1 & 4    & 2.649 & 2.654 \\
+		2 & 1029 & 8.953 & 4.987 \\
 		\bottomrule
 	\end{tabular}
 \end{table}
