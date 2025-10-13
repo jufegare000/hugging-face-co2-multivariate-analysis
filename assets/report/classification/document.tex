@@ -32,20 +32,18 @@
 	\maketitle
 
 	\begin{abstract}
-		This study is centered in the growing concern of environmental sustainability in artificial intelligence, focused on carbon footprint of machine learning models
+
 	\end{abstract}
 
 	% --- Palabras Clave ---
 	\begin{IEEEkeywords}
-		Estadística multivariada, PCA, PFA, regresión, GreenAI.
+		Cluster analysis, K-means, Classification models, 
 	\end{IEEEkeywords}
 
 	% --- Cuerpo del Documento ---
 
 	\section{Introduction}
-	\label{sec:introduction}
-	La creciente relevancia de la inteligencia artificial (IA), particularmente en el ámbito de la IA Verde (GreenAI)\cite{green_ai_ust}, ha impulsado la necesidad de comprender y mitigar su impacto ambiental. Este análisis aborda la escasa información disponible en fuentes abiertas sobre este tema. Para ello, se ha utilizado la base de datos HCO2.csv, proveniente de un repositorio asociado a un estudio previo enfocado en la plataforma de Hugging Face\cite{exploring_carbon_footprint}. Ese estudio inicial buscaba responder a la pregunta de investigación: ¿Cómo los usuarios de Hugging Face reportan su huella de carbono? Los hallazgos revelaron que la mayoría de los usuarios no documentan con detalle las emisiones de carbono de sus modelos. En ese contexto, incluso tecnologías emergentes y dominantes como GPT-2 no reportaban datos específicos sobre su entrenamiento y producción.
-	A partir de esta base de datos, el presente trabajo se centra en un análisis multivariado para identificar las interrelaciones entre las variables clave. La metodología aplicada incluyó el cálculo de las matrices de varianza-covarianza y correlación. Posteriormente, se calcularon los valores y vectores propios de cada técnica para determinar la varianza explicada y los factores significativos. Los resultados fueron visualizados y comparados mediante biplots.
+
 
 
 	\section{Methodology}
@@ -64,34 +62,60 @@
 	The dendogram was cut either at a target k (k $\in{\{3,4\}}$) to improve size balance or at the k that maximized the average silhouette; the equivalent distance threshold reproducing that partition was also recorded. Internal quality was assessed with the silhouette score, while cophenetic correlation was used descriptively to gauge dendogram fidelity. As external validation, labels (\texttt{is\_fair}, \texttt{fairness\_class}, \texttt{model\_type}) were not used for training and were cotrasted post-hoc via contingency tables, $\chi$²/Crammer's V, and adjusted Rand index.
 	Cluster interpretation relied on profiles in original units and on z-centroids; a |z| ranking highlighted the most discriminative variables. A comparative summary across configurations (metrics, thresholds, balance) and visualizations (dedongrams with horizontal cut, stacked proportions and heatmaps) were produced for review.Final selection prioritized overall separability and operational usefulness, balancing silhouette with stability, cluster-size balance and consistency with external labels. 
 
-	\subsection{Normality and implications for LDA (method note).}
-	Exploratory summaries showed that the original variables (e.g., \emph{downloads}, \emph{likes}, CO$_2$, \emph{size}) exhibit
-	heavy right tails, strong skewness, and many zeros (medians $\ll$ means), indicating that multivariate normality is not
-	satisfied. Since Linear Discriminant Analysis (LDA) assumes (i) class-conditional multivariate normality and (ii) equal
-	covariance matrices across classes, applying LDA directly is not appropriate for this dataset.
-	
-	If a linear discriminant were nevertheless desired, the data should first be prepared (e.g., \texttt{log1p}/Yeo--Johnson
-	transformations on skewed variables, standardization, and mild winsorization of extremes) and then revalidated using
-	multivariate normality diagnostics (e.g., Mardia/Henze--Zirkler, Mahalanobis $\chi^2$ QQ plots) and Box’s~M for covariance
-	homogeneity. Should assumptions remain violated—as expected here—Quadratic Discriminant Analysis (QDA), regularized LDA,
-	or non-normality-robust classifiers (logistic regression, tree ensembles, SVM) are recommended.
+\subsubsection*{K-means analysis}
+K-means was applied to the same numeric variables used in the hierarchical analysis
+(\textit{performance\_score}, \textit{co2\_eq\_emissions}, \textit{likes}, \textit{downloads}, \textit{size}).
+Rows with non-numeric/inf values were removed and features were standardized to $z$-scores
+(\texttt{StandardScaler}). We explored $k\in\{2,\ldots,10\}$ with \texttt{k-means++}
+initialization ($n\_init=50$, \texttt{max\_iter}=500, \texttt{random\_state}=42).
+
+For each $k$ we reported: Silhouette (higher is better), Calinski–Harabasz (CH; higher is better),
+Davies–Bouldin (DBI; lower is better), and the inertia (\emph{elbow} curve).
+The primary selector was the maximum Silhouette; CH/DBI and the elbow were used as
+secondary evidence.
+
+For the selected $k$ we exported cluster sizes, original-unit profiles (count/mean/median),
+$z$-centroids, and a variable ranking using $\max|z|$ (to highlight the most discriminative features).
+External labels (\textit{is\_fair}, \textit{clasification\_fairness}, \textit{model\_type})
+were held out from training and only used for validation via contingency tables,
+$\chi^2$/Cramér’s $V$, Fisher’s exact test when $2\times 2$, and ARI when applicable.
 
 
-	\subsection{Análisis de componentes principales}
-	\label{ssec:pca}
-	El análisis de componentes principales se realizó usando las librerías \texttt{sklearn.decomposition}, \texttt{sklearn.preprocessing}, adicionalmente se ejecutaron algunas operaciones sobre las matrices resultantes para revelar información de las matrices de eigenvalues y eigenvectors, también se usó gráficas de dispersión y biplots.
+\subsection{Multivariate Normality \& LDA Feasibility — Methods}
+\label{sec:method-lda}
 
-	\subsection{Análisis de factores principales}
-	El análisis de factores principales se realizó usando la librería \texttt{factor\_analyzer}, adicionalmente se ejecutaron algunas operaciones sobre las matrices resultantes para revelar información de las matrices de eigenvalues y eigenvectors, también se usó gráficas de dispersión y biplots.
+\textbf{Aim.} Check whether the feature vector
+X=\texttt{performance\_score}, \texttt{co2\_eq\_emissions}, \texttt{likes}, \texttt{downloads}, \texttt{size}
+is (approximately) multivariate normal—globally and within classes—so that classical LDA is justified.
 
+\textbf{Preprocessing.} Remove rows with NA/inf; standardize all variables to $z$–scores.
 
-	\subsection{Análisis biplots}
-	Con base la información revelada en las gráficas de biplots, se hizo una comparativa sobre cuál podría explicar mejor la variabilidad de los datos y cuál se ajustaba más al conjunto de datos
+\textbf{Robust scatter \& distances.} Fit a shrinkage (Ledoit–Wolf) covariance
+$\widehat{\Sigma}$ to mitigate outliers. Compute squared Mahalanobis distances
+$d_i^2=(x_i-\widehat{\mu})^\top\widehat{\Sigma}^{-1}(x_i-\widehat{\mu})$ (i) globally and
+(ii) per class.
+
+\textbf{Normality diagnostic.} Under MVN with $p$ variables, $d_i^2\sim\chi^2_p$.
+Compare empirical quantiles of $\{d_i^2\}$ against $\chi^2_p$ using QQ–plots:
+global and class–conditional. Large, systematic upward deviations (heavy tails/mixtures) indicate
+non–normality.
+
+\textbf{Optional formal checks.} (a) Mardia or Henze–Zirkler tests on $z$–scores; (b) Box’s $M$
+(or visual comparison) for equality of class covariances.
+
+\textbf{Decision rule.}
+\begin{enumerate}[nosep,leftmargin=*]
+	\item \emph{Proceed with classical LDA} if QQ–plots track the $\chi^2_p$ line reasonably well
+	(globally \emph{and} by class) and class covariances appear similar.
+	\item \emph{Prefer robust/regularized LDA or nonparametric classifiers}
+	(e.g., shrinkage LDA, logistic regression, tree–based) if tails inflate, classes differ in
+	scatter, or tests reject MVN/homoscedasticity.
+\end{enumerate}
 
 	\section{Results and discussions}
 
 	\label{sec:results}
-	El proceso del análisis se divide principalmente en los anteriormente mencionados en la metodología, cada paso del análisis tiene asociado uno o más scripts de python, el proyecto se divide en 3 carpetas principales: \textit{assets}, \textit{notebooks},  y \textit{src}, en ellos se encuentran recursos de código y base de datos usados para el análisis. \texttt{assets} contiene la base de datos \textit{HCO2.csv} y en ella se encuentra la versión original de los datos recolectados en el estudio de hugging face\cite{exploring_carbon_footprint}, en este directorio, se almacenará de igual forma: las gráficas, los csvs procesados, y estructuras de datos auxiliares para los análisis. Por otro lado, \textit{notebooks} contiene los archivos de los jupyter notebooks que corresponden a cada de análisis, para legibilidad, se tiene un notebook por cada fase del análisis. Finalmente  \textit{src} contiene scripts comunes para apoyar cada fase del análisis, y son importados en cada notebook.
+LOREMPIPSUM
 
 	 \subsection{Univariate Analysis}
 	 \label{ssec:unianal}
@@ -349,9 +373,109 @@ The pattern is robust across $k\in[2,6]$ and across distance/linkage families th
 the \emph{single} linkage can induce chaining in dense regions. These caveats do not affect the substantive
 finding that \emph{downloads} (and, secondarily, \emph{likes}) drive the segmentation.
 
-	\subsection{Limpieza de datos}
-	En el anterior apartado se realizó un análisis general de los resultados y se encontró que las variables \texttt{size} y \texttt{size\_efficiency} poseen algunos datos nulos, cerca del 8\%, por lo tanto, es necesario aplicar una regresión, en la ruta del proyecto \texttt{notebooks/1\_2\_data\_cleaning.ipynb} se encuentra la implementación de la regresión y la limpieza de datos, se escogió la regresión, porque es la técnica que menos sesgos podría generar en el conjunto de datos, a diferencia de las otras formas de imputación.
-	Luego de la imputación de variables, se limpiaron los valores infinitos, luego se realizó una estandarización, para realizar el análisis de varianza y de covarianza, en este punto se excluyen las variables categóricas
+ \subsection{Univariate Analysis}
+We ran k-means on the standardized variables
+(\textit{performance\_score}, \textit{co2\_eq\_emissions}, \textit{likes}, \textit{downloads}, \textit{size})
+for $k\in\{2,\ldots,10\}$ with \texttt{k-means++}, $n_{\text{init}}{=}50$, \texttt{max\_iter}{=}500.
+Model selection combined four internal criteria:
+
+\begin{itemize}
+	\item \textbf{Silhouette (max is best).} The curve peaked at $\mathbf{k=2}$ with $\approx\mathbf{0.286}$, and decreased thereafter (Fig.~\ref{fig:silhouette-kmeans}).
+	\item \textbf{Calinski--Harabasz (max is best).} The maximum occurred at $k{=}3$ ($\approx\!330$), with $k{=}2$ close behind ($\approx\!290$) (Fig.~\ref{fig:ch-kmeans}).
+	\item \textbf{Davies--Bouldin (min is best).} DBI decreased monotonically with $k$, reaching $\approx\!1.21$ at $k{=}10$ (Fig.~\ref{fig:dbi-kmeans}).
+	\item \textbf{Elbow (inertia).} Inertia dropped rapidly up to $k{\sim}6$ and then flattened, with no sharp elbow afterwards (Fig.~\ref{fig:elbow-kmeans}).
+\end{itemize}
+
+Given the primary criterion (silhouette), we selected $\mathbf{k=2}$.
+The resulting partition produced \textbf{unbalanced cluster sizes} (about $n{\sim}740$ vs.\ $n{\sim}300$; Fig.~\ref{fig:sizes-k2}).
+Cluster profiles (in original units) and $z$–centroids were computed; the ranking by $\max|z|$ again highlighted
+\textit{downloads} as the most discriminative variable, followed by \textit{likes}, with the remaining variables contributing less.
+Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification\_fairness}, \textit{model\_type}) were generated for $k{=}2$
+(see Supplement for the full tables).
+
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.48\linewidth]{assets/silhouette_vs_k.png}\hfill
+	\includegraphics[width=.48\linewidth]{assets/ch_vs_k.png}
+	\caption{Silhouette and Calinski--Harabasz across $k$.}
+	\label{fig:silhouette-kmeans}\label{fig:ch-kmeans}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.48\linewidth]{assets/dbi_vs_k.png}\hfill
+	\includegraphics[width=.48\linewidth]{assets/elbow_inertia.png}
+	\caption{Davies--Bouldin (lower is better) and inertia (elbow) across $k$.}
+	\label{fig:dbi-kmeans}\label{fig:elbow-kmeans}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.55\linewidth]{assets/cluster_sizes_k2.png}
+	\caption{Cluster sizes for the selected solution ($k{=}2$).}
+	\label{fig:sizes-k2}
+\end{figure}
+The internal criteria point to different trade-offs:
+silhouette clearly favors \textbf{$k{=}2$}, Calinski--Harabasz prefers \textbf{$k{=}3$},
+and Davies--Bouldin keeps improving as $k$ grows. In this context, we prioritized
+silhouette because it balances compactness and separation and is less biased by the growth
+of $k$ than CH/DBI. The \emph{elbow} curve shows diminishing returns beyond $k{\sim}6$,
+supporting the choice of a small number of groups.
+
+The $k{=}2$ solution is \emph{interpretable} and \emph{stable} (across restarts) but
+\emph{unbalanced}: one major segment (catalog-like) and a smaller, high-intensity segment.
+The profile tables indicate that the minor cluster concentrates substantially higher
+\emph{downloads} and \emph{likes} (and slightly higher \emph{performance}), while medians for
+\emph{size}/CO$_2$ are not dominant—consistent with the hierarchical analysis.
+The $\max|z|$ ranking confirms \textit{downloads} (then \textit{likes}) as the strongest
+separators, which aligns with the business intuition that usage/engagement variables
+drive the segmentation more than footprint or size.
+
+Regarding \emph{external} labels, the cross-tabs for $k{=}2$ show heterogeneous mixes
+rather than perfectly pure clusters, i.e., they are useful for characterization but should
+not be read as supervised classes. This is expected because those labels were not used for
+training. Overall, the k-means segmentation complements the hierarchical results:
+it recovers the same two-segment story (catalog vs.\ high-traction niche), is easier to
+deploy, and preserves the same ordering of discriminative variables. If more granularity
+is needed, $k{=}3$ is a reasonable alternative per CH, though with a slight loss in
+silhouette and added complexity.
+
+\subsection{Multivariate Normality \& LDA Feasibility}
+
+\textbf{Visual diagnostics.} Mahalanobis QQ–plots (global and by class) depart markedly from the
+$\chi^2_p$ reference line in the upper tail. The global plot shows a pronounced upward bend,
+indicating heavy–tailed behavior and/or mixture structure. Class–conditional plots (for
+\texttt{is\_fair}=\texttt{False}/\texttt{True}) display the same pattern rather than aligning with
+the diagonal, so non–normality is not restricted to a single group.
+
+\textbf{Likely drivers.} The heaviest deviations coincide with variables that are naturally
+skewed and highly dispersed in this domain (e.g., \texttt{downloads}, \texttt{likes}, and
+\texttt{size}). Even after $z$–scoring, extreme observations inflate the robust Mahalanobis
+distances, consistent with long right tails.
+
+\textbf{Implications for LDA.} Classical LDA assumes (i) multivariate normality within each
+class and (ii) equal covariance matrices across classes. The QQ–plots provide clear evidence
+against (i), and the differing tail behavior between classes suggests that (ii) may also be
+questionable. Consequently, a standard LDA fit would risk biased boundaries and over–optimistic
+error estimates.
+
+\textbf{Recommended course.} If a linear boundary is desired, prefer \emph{regularized/shrinkage
+	LDA} (e.g., Ledoit–Wolf within–class covariance) and consider mild preprocessing (log or
+$\log(1+x)$ transforms for strictly positive features; winsorization of top quantiles). As a
+distribution–free baseline, \emph{penalized logistic regression} provides a linear separator
+without normality assumptions. If class scatters differ substantially, \emph{QDA with
+	regularization} or tree–based methods are more appropriate.
+
+\textbf{Summary.} The MVN assumption is \emph{not} supported for these features (globally nor
+within classes). Standard LDA is therefore not recommended without transformations and
+regularization; robust or nonparametric alternatives are better aligned with the observed data
+structure.
+
+
+
+
+
 
 	\subsection{Análisis de covarianza y correlación}
 	Para realizar el análisis de covarianza y correlación, lo primero es estandarizar los datos usando \texttt{StandardScaler} para presentarlos en la gráfica de manera más amigable, dado que las variables tienen una dispersión muy alta, a continuación se muestra la gráfica de correlación, ya que la de covarianza no permite ver las relaciones de manera tan clara
