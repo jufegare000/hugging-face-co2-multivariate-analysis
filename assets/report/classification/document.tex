@@ -16,10 +16,9 @@
 	group-minimum-digits = 4,
 	output-decimal-marker = {.}
 }
-% --- Configuración de documentos y metadatos ---
+
 \title{ CO$_{2}$ classification analysis for AI models}
 
-% Autores y afiliaciones
 \author{
 	\IEEEauthorblockN{Juan Felipe Gallo Rendón\IEEEauthorrefmark{1}}
 	\IEEEauthorblockA{\textit{Engineering department} \\
@@ -28,19 +27,16 @@
 }
 
 \begin{document}
-	% Comando para generar el título, autores y afiliaciones
 	\maketitle
 
 	\begin{abstract}
 
 	\end{abstract}
 
-	% --- Palabras Clave ---
 	\begin{IEEEkeywords}
 		Cluster analysis, K-means, Classification models, 
 	\end{IEEEkeywords}
 
-	% --- Cuerpo del Documento ---
 
 	\section{Introduction}
 
@@ -84,7 +80,7 @@ $\chi^2$/Cramér’s $V$, Fisher’s exact test when $2\times 2$, and ARI when a
 \subsection{Multivariate Normality \& LDA Feasibility — Methods}
 \label{sec:method-lda}
 
-\textbf{Aim.} Check whether the feature vector
+Check whether the feature vector
 X=\texttt{performance\_score}, \texttt{co2\_eq\_emissions}, \texttt{likes}, \texttt{downloads}, \texttt{size}
 is (approximately) multivariate normal—globally and within classes—so that classical LDA is justified.
 
@@ -111,6 +107,11 @@ non–normality.
 	(e.g., shrinkage LDA, logistic regression, tree–based) if tails inflate, classes differ in
 	scatter, or tests reject MVN/homoscedasticity.
 \end{enumerate}
+
+\subsection{LDA }
+
+Multivariate normality was examined via Mahalanobis Q–Q diagnostics (globally and by class). Because clear departures from normality were observed, regularized discriminants were preferred. Linear Discriminant Analysis (LDA) with automatic shrinkage (and, for projections, the \texttt{eigen} solver) and Quadratic Discriminant Analysis (QDA) with mild regularization were fit on a stratified train/test split. Performance was summarized with confusion matrices, precision/recall/F1, ROC–AUC, and 5–fold stratified cross–validation. Model parameters (priors, class means, coefficients, scalings), LD scores, and plots (ROC, score histograms, dendrograms) were exported to files to enable reporting and reproducibility.
+
 
 	\section{Results and discussions}
 
@@ -473,166 +474,51 @@ regularization; robust or nonparametric alternatives are better aligned with the
 structure.
 
 
+\paragraph{Results and discussion (LDA).}
+An LDA classifier was trained on a stratified train/test split using a \texttt{log1p}--standardization preprocessing pipeline and the \texttt{eigen} solver with automatic shrinkage. Class priors reflected moderate imbalance (False: $72.9\%$, True: $27.1\%$) and were preserved during training. On the held-out test set ($n=259$), the model reached an overall accuracy of \textbf{0.919}; the ROC curve achieved an \textbf{AUC of 0.983} (Fig.~\ref{fig:lda-roc}), indicating excellent ranking performance across thresholds. Five-fold stratified cross-validation over the full dataset yielded a mean accuracy of \textbf{0.925} ($\pm\,0.021$), supporting stability under resampling.
 
+Inspection of the linear discriminants $\delta_k(x)=x^\top A_k+b_k$ showed the largest absolute coefficients in $A_k$ for \emph{performance\_score}, \emph{co2\_eq\_emissions}, and \emph{size}, in that order, which identifies these variables as the principal drivers of separation once features are transformed. The LD1 score distributions for both classes are clearly separated with only a narrow overlap (Fig.~\ref{fig:lda-geom}\,\subref{fig:lda-scores}), consistent with the near-perfect AUC. The confusion matrix on test data (TN$=184$, FP$=5$, FN$=16$, TP$=54$; Fig.~\ref{fig:lda-geom}\,\subref{fig:lda-cm}) indicates very high specificity for the majority class and competitive recall for the minority class; the precision--recall trade-off at the default threshold is therefore reasonable. If fairness identification (True) must be prioritized, the operating point can be shifted to increase sensitivity with limited loss in overall accuracy.
 
+Overall, LDA with shrinkage produced a parsimonious, interpretable boundary, strong generalization (cross-validated accuracy $\approx0.93$), and coherent variable importance (Fig.~\ref{fig:lda-loadings}) highlighting performance and carbon-cost factors as the dominant discriminants. These outcomes justify LDA as a robust linear baseline; more complex models (e.g., QDA or non-linear kernels) would only be warranted if heteroscedasticity or curvature were demonstrably exploitable for additional gains.
 
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.72\linewidth]{assets/LDA-eigen_roc_test.png}
+	\caption{ROC curve on the test set (AUC $\approx 0.98$).}
+	\label{fig:lda-roc}
+\end{figure}
 
-	\subsection{Análisis de covarianza y correlación}
-	Para realizar el análisis de covarianza y correlación, lo primero es estandarizar los datos usando \texttt{StandardScaler} para presentarlos en la gráfica de manera más amigable, dado que las variables tienen una dispersión muy alta, a continuación se muestra la gráfica de correlación, ya que la de covarianza no permite ver las relaciones de manera tan clara
-
-
-	Para interpretar las correlaciones, se toma de manera univariada las relaciones entre las variables del conjunto de datos
-	\subsubsection{\texttt{co2\_eq\_emissions} vs. \texttt{likes}}
-
-	Con una correlación de 0.99, esta es una correlación positiva extremadamente fuerte. Sugiere que los modelos de IA que tienen un mayor número de likes
-	(\texttt{likes}) también tienden a tener una emisión de CO2 equivalente mucho más alta.
-	\subsubsection{\texttt{co2\_eq\_emissions} vs. \texttt{size}}
-	Con una correlación de 0.99, similar al caso anterior, existe una correlación positiva extremadamente fuerte. Esto implica que los modelos de IA más grandes en términos de tamaño (\texttt{size}) son los que emiten una mayor cantidad de CO2.
-
-	\subsubsection{\texttt{co2\_eq\_emissions} vs. \texttt{downloads}}
-	Con una correlación de 0.04, La correlación es prácticamente cero (muy débil). Esto indica que no hay una relación lineal significativa entre el número de descargas (\texttt{downloads}) y la cantidad de emisiones de CO2. Un modelo puede tener muchas descargas independientemente de su huella de carbono.
-
-	\subsubsection{\texttt{co2\_eq\_emissions} vs. \texttt{size\_efficency}}
-	Con una correlación de -0.01, La correlación es también cercana a cero. Esto sugiere que la eficiencia del tamaño (\texttt{size\_efficency}) no está linealmente relacionada con las emisiones de CO2. Es posible que esta variable no esté capturando la eficiencia en términos de emisiones, o que la relación sea no lineal.
-
-	\subsection{Análisis de componentes principales (PCA) y factores principales (PFA)}
-	Para este apartado, se excluyeron las variables cualitativas, y se conservó de las ejecuciones anteriores la base de datos de imputados, limpios y estandarizados, luego de estandarizar los datos, se le aplicó la función \texttt{fit\_transform} los detalles de la implementación se presentan en el notebook que se encuentra en la ruta: \texttt{3\_analisis\_factores.ipynb} del proyecto.
-	\subsubsection{Análisis de componentes principales}
-	El primer resultado que se encuentra es acerca de la varianza explicada, los resultados se encuentran consolidados en la siguiente tabla:
-
-	\begin{table}[H]
+\begin{figure}[t]
+	\centering
+	\begin{subfigure}{.48\linewidth}
 		\centering
-		\caption{Resultados del Análisis de Componentes Principales}
-		\begin{tabular}{l c c c}
-			\toprule
-			Componente & Valor propio & Varianza Explicada & Varianza Acumulada \\
-			\midrule
-			PC1 & 2.989 & 59.74\% & 59.74\% \\
-			PC2 & 1.012 & 20.23\% & 79.97\% \\
-			PC3 & 0.988 & 19.75\% & 99.72\% \\
-			PC4 & 0.010 & 0.21\%  & 99.93\% \\
-			PC5 & 0.003 & 0.07\% & 100.00\% \\
-			\bottomrule
-		\end{tabular}
-		\label{tab:pca_results}
-	\end{table}
-	\subsubsection{Interpretación de los resultados}
-	\begin{itemize}
-		\item \textbf{Componente 1}: Con un valor propio de \texttt{2.989}, este componente es el más importante. Explica casi el 60\% de la varianza total de los datos por sí solo. Esto significa que la mayor parte de la información está concentrada en esta primera dimensión.
-		\item \textbf{Componente 2}: Explica un \texttt{20.23\%} de la varianza. Al combinarlo con el Componente 1, ambos componentes juntos explican casi el \texttt{80\%} de la varianza acumulada.
-		\item \textbf{Componente 3}: Este componente explica casi un 20\% de la varianza. Al incluirlo, la varianza acumulada asciende al \texttt{99.72\%}.
-		\item \textbf{Componentes 4 y 5}: Estos componentes tienen valores propios muy pequeños y explican una varianza insignificante (menos del 1\% entre ambos).
-	\end{itemize}
-	\subsubsection{Selección de componentes}
-	Para decidir cuántos componentes conservar, se aplicó el criterio de  Kaiser, que sugiere mantener los componentes con un valor propio mayor a 1.
-	Según este criterio, se deberías considerar conservar solo los dos primeros componentes principales, ya que sus valores propios son \texttt{2.989} y \texttt{1.012}.
-	Estos dos componentes juntos resumen el \texttt{79.97\%} de la varianza de tus datos, conservarlos permite reducir la dimensionalidad del conjunto de datos de cinco variables a solo dos, perdiendo muy poca información esencial.
-	A continuación, se presenta la matriz de cargas factoriales para los componentes principales. Cada valor indica la correlación de la variable original con el componente correspondiente.
-
-	\begin{table}[H]
+		\includegraphics[width=\linewidth]{assets/LDA-eigen_scores_hist_test.png}
+		\caption{LD1 scores (test).}
+		\label{fig:lda-scores}
+	\end{subfigure}\hfill
+	\begin{subfigure}{.48\linewidth}
 		\centering
-		\caption{Resultados del Análisis de Componentes Principales}
-		\begin{tabular}{l c c c}
-			\toprule
-			Variable Original & Carga en PC1 & Carga en PC2 \\
-			\midrule
-			\texttt{co2\_eq\_emissions} & 0.577 & 0.047 \\
-			\texttt{downloads} & 0.033 & -0.695 \\
-			\texttt{likes} & -0.031 & 0.715 \\
-			\texttt{size} & -0.126 & 0.052 \\
-			\texttt{size\_efficency} & 0.805 & 0.031 \\
-			\bottomrule
-		\end{tabular}
-		\label{tab:pca_results}
-	\end{table}
+		% Use your exported heatmap; if not available, replace with the numeric matrix figure.
+		\includegraphics[width=\linewidth]{assets/LDA-eigen_confusion_test_heatmap.png}
+		\caption{Confusion matrix (test).}
+		\label{fig:lda-cm}
+	\end{subfigure}
+	\caption{Geometric separation and error structure. The dashed line in \subref{fig:lda-scores} marks the default decision boundary.}
+	\label{fig:lda-geom}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.72\linewidth]{assets/LDA-eigen_loadings_abs_bar.png}
+	\caption{Absolute loadings on LD1 (averaged across classes). Performance and CO$_2$ dominate; size and downloads are secondary; likes is negligible.}
+	\label{fig:lda-loadings}
+\end{figure}
 
 
-	\subsubsection{Interpretación de los Componentes Principales Clave}
-	\begin{itemize}
-		\item \textbf{Componente 1 (PC1)}: Este componente, que explica la mayor parte de la varianza del conjunto de datos, está fuertemente asociado con las variables 4 y 0. Ambas contribuyen de manera positiva a este componente, sugiriendo que el PC1 captura un factor común de estas dos variables.
-		\item \textbf{Componente 2 (PC2)}: Este componente representa un contraste entre la variable 2 y la variable 1. La alta carga positiva de la variable 2 y la alta carga negativa de la variable 1 indican que el PC2 describe una relación inversamente proporcional entre ellas."
-	\end{itemize}
 
-	\begin{itemize}
-		\item \textbf{Varianza en el PC1}: La mayoría de los puntos se agrupan cerca de la coordenada 0 en el eje horizontal, con la notable excepción de un punto que se encuentra muy alejado, alrededor de PC1 = 60. Este punto atípico (o outlier) es una observación con un valor extremadamente alto en el primer componente principal. La gran dispersión a lo largo del eje horizontal refuerza lo que vimos en el análisis de los valores propios: el PC1 captura la mayor parte de la varianza en tus datos.
-		\item \textbf{Varianza en el PC2}: En el eje vertical (PC2), los puntos también están bastante concentrados cerca de la coordenada 0, aunque hay una mayor dispersión vertical en este grupo principal. Hay un par de puntos que se alejan del grupo, pero la variabilidad es considerablemente menor en comparación con el PC1. Esto confirma que el PC2 explica menos varianza que el PC1.
-		\item \textbf{Presencia de un Outlier}:  La observación aislada en la esquina inferior derecha es un caso extremo. Este punto tiene un valor muy alto en el PC1 y un valor moderadamente bajo en el PC2. Es probable que esta observación represente un modelo de IA con características extremas en las variables originales que más contribuyen al PC1 (por ejemplo, un tamaño o una emisión de CO2 excepcionalmente grandes).
-	\end{itemize}
-
-	\subsubsection{Análsis de factores principales (PFA)}
-	Para el Análisis Factorial de Principales Componentes (PFA), los números que ha obtenido son los valores propios (eigenvalues) de los factores. A diferencia del PCA, donde los valores propios explican la varianza total de los datos, en el PFA estos valores explican solo la varianza común (o compartida) entre las variables, lo cual es la varianza que puede atribuirse a factores subyacentes.
-	La interpretación de los resultados se presenta a continuación en la siguiente tabla:
-	\begin{table}[H]
-		\centering
-		\caption{Interpretación de Factores Principales}
-		\begin{tabular}{l c c c}
-			\toprule
-			Factor & Valor propio & \% de Varianza Común Explicada & \% Acumulado	 \\
-			\midrule
-			\texttt{F1} & 2.987 &    74.49\% & 74.49\%  \\
-			\texttt{F2} & 1.012 &    25.26\% & 99.75\%  \\
-			\texttt{F3} & 0.988 &    0.22\%  & 99.97\%   \\
-			\texttt{F4} & 0.010 &    0.03\%  & 100.00\%   \\
-			\texttt{F5} & 0.003 &    0.00\%  & 100.00\%  \\
-			\bottomrule
-		\end{tabular}
-		\label{tab:pca_results}
-	\end{table}
-	\subsubsection{Interpretación de factores (PFA)}
-	\begin{itemize}
-		\item \textbf{Factor 1 (Valor Propio: 2.987)}: Este factor captura la mayor parte de la varianza compartida, explicando un notable 74.49\% de ella por sí solo. Es, con diferencia, el factor más importante.
-		\item \textbf{Factor 2 (Valor Propio: 1.012)}: Este factor también es muy significativo, ya que explica otro 25.26\% de la varianza común. Al combinar el Factor 1 y el Factor 2, se explica casi el 99.75\% de toda la variabilidad compartida de tu conjunto de datos.
-		\item \textbf{Factores Restantes (3, 4 y 5)}: Los valores propios de estos factores son muy bajos, lo que indica que explican una cantidad insignificante de la varianza común
-	\end{itemize}
-	Para determinar cuantos factores retener, se usa el criterio de kaiser, el detalle de la implementación puede verse en la ruta: \texttt{notebooks/3\_analisis\_factores.ipynb}
-	\subsubsection{Análisis de cargas factoriales}
-	El Factor 1 es el más significativo, tal como lo vimos en el análisis de los valores propios. Las variables con las cargas más altas en este factor son:
-	\begin{itemize}
-		\item \texttt{co2\_eq\_emissions}: \texttt{0.999200}
-		\item \texttt{likes}: \texttt{0.995705}
-		\item \texttt{size}: \texttt{0.993753}
-	\end{itemize}
-	Estos valores son extremadamente altos, lo que significa que el Factor 1 es, en esencia, un resumen de estas tres variables. Todas ellas tienen una correlación positiva muy fuerte con el factor, lo que sugiere que los modelos con un gran tamaño y un alto número de likes tienden a tener una alta emisión de CO2. Este factor puede ser interpretado como un factor de "Complejidad y Popularidad del Modelo" que está directamente relacionado con la huella de carbono.
-	Las variables \texttt{downloads} y \texttt{size\_efficency} tienen cargas muy bajas en el Factor 1, lo que indica que no contribuyen significativamente a este factor latente.
-	El Factor 2 explica la varianza común restante. La variable con la carga más alta en este factor es \texttt{downloads}: \texttt{0.718192}. Esto sugiere que el Factor 2 está definido principalmente por el número de descargas. Las otras variables tienen cargas muy bajas, lo que indica que no están fuertemente correlacionadas con este factor. Por lo tanto, el Factor 2 puede ser interpretado como un factor de "Alcance o Adopción del Modelo", que es conceptualmente distinto del primer factor.
-	Los resultados confirman que las variables de emisiones de CO2, likes y tamaño están altamente correlacionadas y se agrupan en el mismo constructo subyacente, mientras que las descargas representan un concepto separado el conjunto datos.
-
-	El gráfico de sedimento confirma visualmente lo que los valores numéricos indicaban: los Factores 1 y 2 son los más significativos y los únicos que vale la pena conservar para el análisis. Los factores 3, 4 y 5 tienen valores propios muy bajos, lo que significa que explican una cantidad trivial de varianza y pueden ser descartados.
-	A continuación se presentan los biplots de los métodos PCA y PFA
-
-
-	\subsubsection{Interpretación de Biplots}
-	\textbf{Para el biplot de factores principales}: \textbf{Factor1 popularidad y tamaño:} Este factor, representado por el eje horizontal, está fuertemente correlacionado con las variables likes, \texttt{co2\_emissions} y \texttt{size}. Las aplicaciones con valores altos en este factor tienden a ser más populares, con una mayor cantidad de 'me gusta', un tamaño de archivo más grande y, posiblemente, un mayor impacto ambiental.
-	\textbf{Factor 2} Capacidad de Descarga: este factor, representado por el eje vertical, se relaciona principalmente con la variable downloads. Indica que las aplicaciones con altas puntuaciones en este factor son las que tienen un alto número de descargas, independientemente de su popularidad o tamaño.
-	La mayoría de las observaciones se agrupan en el centro, lo que sugiere que la mayoría de las aplicaciones tienen características promedio. Sin embargo, se pueden identificar dos grupos distintos de aplicaciones:
-	\begin{itemize}
-		\item Las que se caracterizan por una alta popularidad y tamaño (Factor 1).
-		\item Las que se distinguen por un alto número de descargas (Factor 2).
-	\end{itemize}
-	La variable size\_efficiency muestra una correlación muy baja con ambos factores, lo que indica que no es un buen predictor de la popularidad, el tamaño o las descargas de una aplicación.
-	En cuanto al biplot de análisis de componentes principales. El PC1, que explica la mayor parte de la varianza en los datos, establece un contraste directo entre likes y downloads. Esto indica una fuerte correlación negativa: las aplicaciones con un alto número de "me gusta" tienden a tener pocas descargas, mientras que aquellas con muchas descargas reciben menos "me gusta". Esto podría sugerir dos estrategias distintas de éxito. Además, el PC2 no es un factor dominante, ya que las variables size, size\_efficiency y co2\_eq\_emissions tienen una baja correlación con él. Esto significa que estas variables no aportan valor para explicar la principal variabilidad del conjunto de datos. y En síntesis:
-	El biplot revela que la varianza de los datos se explica principalmente por una sola dimensión: el equilibrio entre la popularidad social y el volumen de descargas. Las otras variables tienen un impacto mínimo en la forma en que tus datos se agrupan.
-
-	\section{Conclusión}
+	\section{Conclusions}
 	\label{sec:conclusion}
-	El análisis comparativo de las técnicas multivariadas aplicadas al conjunto de datos, específicamente el Análisis de Componentes Principales (PCA) y el Análisis de Factores Principales (PFA), ha revelado información crucial sobre la estructura subyacente de las variables.
 
-	\subsection{Justificación del Método Seleccionado}
-	El Análisis de Factores Principales (PFA) se identifica como el método más apropiado para este estudio. Aunque el PCA logró identificar una dimensión de varianza predominante, su principal objetivo es la reducción de dimensionalidad y no la interpretación de constructos latentes. En contraste, el PFA, diseñado para tal fin, proporcionó un modelo más robusto y conceptualmente interpretable.
-
-	\subsection{Hallazgos encontrados}
-	El modelo de PFA extrajo satisfactoriamente dos factores latentes que explican las interrelaciones observadas entre las variables.  Estos factores se interpretan de la siguiente manera:
-
-	Factor 1: Popularidad y Escala. Este factor se correlaciona fuertemente con las variables likes, co2\_emissions y size. Dicho factor representa un constructo de éxito que agrupa atributos de popularidad y tamaño.
-
-	Factor 2: Capacidad de Adquisición. Este factor está casi exclusivamente definido por la variable downloads. Su independencia del Factor 1 sugiere que la capacidad de una aplicación para ser descargada es una dimensión distinta y no redundante del éxito.
-
-	\subsection{Implicaciones}
-	Los resultados demuestran que el comportamiento de las aplicaciones no se puede explicar adecuadamente por una sola dimensión, sino que está influenciado por al menos dos constructos subyacentes. La identificación de estos factores permite una comprensión más profunda de la dinámica del mercado y proporciona una base sólida para la toma de decisiones estratégicas, orientadas a optimizar el rendimiento en cada una de estas dimensiones independientes.
-
-	\subsection{Conclusión final}
-	Aunque el conjunto de datos es funcional para un análisis exploratorio, su limitada granularidad y la ausencia de estandarización en las métricas de evaluación impiden un análisis riguroso de la huella de carbono. La variabilidad en el hardware utilizado, la ubicación geográfica de los centros de datos y la falta de consistencia en los informes de consumo energético y emisiones de CO2 representan obstáculos significativos para identificar con certeza las variables más influyentes.
-	Estos factores comprometen la capacidad de extraer conclusiones definitivas sobre la relación entre las configuraciones de los modelos de inteligencia artificial y su impacto ambiental. Por lo tanto, se enfatiza la necesidad de futuros estudios que se beneficien de conjuntos de datos más detallados, actualizados y estandarizados. Un enfoque más riguroso en la recopilación de datos permitirá una comprensión más profunda del impacto ambiental de la IA y facilitará el desarrollo de prácticas más sostenibles en la industria.
 
 	\bibliographystyle{IEEEtran}
 
