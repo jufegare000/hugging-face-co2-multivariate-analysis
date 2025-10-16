@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>Apéndice – Clasificación y Discriminantes</title>
+<style>
+ body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.45; margin: 2rem; }
+ h1,h2,h3 { margin-top: 1.4em; }
+ code, pre { background: #f6f8fa; padding: .1rem .3rem; border-radius: 4px; }
+ .note { font-size: 0.95rem; color: #444; }
+ ul { margin-top: 0.3rem; }
+ .fig { margin: 1rem 0; }
+ .callout { padding: 0.8rem 1rem; border-left: 4px solid #444; background: #f6f8fa; border-radius: 4px; }
+ table { border-collapse: collapse; }
+ th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: center; }
+ th { background: #f0f0f0; }
+</style>
+</head>
+<body>
+<h1>Apéndice – Funciones Discriminantes, Figuras Clave y Tabla de Métricas</h1>
+<p class="note">Fecha: 2025-10-16</p>
+
+<h2>1) Funciones discriminantes (LDA con shrinkage)</h2>
+<p><strong>Forma general</strong> (binaria):</p>
+<pre>
+δ_k(x) = xᵀΣ⁻¹μ_k − ½ μ_kᵀΣ⁻¹μ_k + ln π_k,  &nbsp; k ∈ {0,1}
+Regla: asignar a la clase con mayor δ_k(x)
+</pre>
+<p>La proyección <em>LD1</em> equivale a <code>bᵀx</code> con <code>b = Σ⁻¹(μ₁−μ₀)</code>. Del reporte se desprende el
+<strong>ranking por |coeficiente|</strong> (cargas en LD1):</p>
+<ol>
+  <li><code>performance_score</code> (mayor contribución)</li>
+  <li><code>co2_eq_emissions</code></li>
+  <li><code>size</code></li>
+  <li><code>downloads</code></li>
+  <li><code>likes</code></li>
+</ol>
+<div class="callout">
+<b>Nota:</b> El PDF no incluye los valores numéricos de los coeficientes; se reporta su orden de importancia y el desempeño
+(AUC, matriz de clasificación, y CV). Si deseas, puedo extraer los coeficientes del artefacto de entrenamiento si lo tienes en CSV/JSON.
+</div>
+
+<h2>2) Figuras clave</h2>
+<ul>
+  <li>ROC y PR del LDA (según el reporte, AUC ≈ 0.983).</li>
+  <li>Distribuciones de <em>LD1</em> por clase (clara separación, leve solapamiento).</li>
+  <li>QQ-plot de distancias de Mahalanobis (colas pesadas → justifica regularización).</li>
+</ul>
+<p>Abajo incluyo figuras derivadas de las métricas consolidadas:</p>
+
+<div class="fig">
+  <h3>2.1 AUC (ROC) por modelo</h3>
+  <img src="fig_auc_por_modelo.png" alt="AUC por modelo" style="max-width: 720px; width: 100%;"/>
+</div>
+
+<div class="fig">
+  <h3>2.2 Accuracy por modelo</h3>
+  <img src="fig_accuracy_por_modelo.png" alt="Accuracy por modelo" style="max-width: 720px; width: 100%;"/>
+</div>
+
+<div class="fig">
+  <h3>2.3 Matriz de clasificación (LDA – test)</h3>
+  <img src="fig_confusion_lda.png" alt="Matriz de clasificación LDA" style="max-width: 480px; width: 100%;"/>
+  <p class="note">TN=184, FP=5, FN=16, TP=54. Accuracy=0.919, Precision=0.915, Recall=0.771, F1=0.837.</p>
+</div>
+
+<h2>3) Tabla compacta de métricas</h2>
+<p>La tabla completa está en el archivo "Tabla de métricas por modelo (del reporte)". Resumen textual:</p>
+<ul>
+  <li><b>LDA</b>: AUC≈0.983, Accuracy≈0.919, F1≈0.837; CV Acc≈0.925±0.021.</li>
+  <li><b>SVM‑RBF</b>: AUC≈0.991, Accuracy≈0.954.</li>
+  <li><b>Gradient Boosting</b>: AUC=1.000, Accuracy=1.000.</li>
+</ul>
+
+<h2>4) Validación</h2>
+<p>Se reporta validación cruzada estratificada (5-fold) con media 0.925 y desvío 0.021 para LDA, lo que respalda estabilidad.</p>
+
+<h2>5) Predicción de nuevos elementos</h2>
+<p>El pipeline mencionado en el reporte (<code>log1p → estandarización → LDA</code>) es apto para predicciones reproducibles. 
+Si compartes un archivo CSV con nuevas observaciones, puedo anexar aquí la tabla de predicciones con probabilidades.</p>
+
+<hr/>
+<p class="note">Este apéndice se construyó a partir de las cifras explícitas en tu PDF. 
+Donde el PDF no contenía valores numéricos (p. ej., coeficientes exactos), se consignó el orden de importancia y se dejaron indicaciones para incorporarlos si los tienes en archivos de salida.</p>
+</body>
+</html>
