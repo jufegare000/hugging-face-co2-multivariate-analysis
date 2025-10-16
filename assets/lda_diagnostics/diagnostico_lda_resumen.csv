@@ -1,0 +1,2 @@
+n,p,classes,sizes,mardia_p_skew_global,mardia_p_kurt_global,box_m_pvalue,decision,alternative
+1033,5,"[np.False_, np.True_]","[np.int64(753), np.int64(280)]",0.0,0.0,0.0,LDA NO recomendable (violación de normalidad y/o tamaños).,"Sugerido: LDA regularizada, QDA si covarianzas difieren, o modelos no paramétricos (logística, árboles, SVM)."
