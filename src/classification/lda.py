@@ -89,7 +89,6 @@ def eval_pipe(name, pipe, Xtr, ytr, Xte, yte):
     print(classification_report(ytr, yhat_tr, digits=3))
     print("[Test]  Confusion matrix:\n", confusion_matrix(yte, yhat_te))
     print(classification_report(yte, yhat_te, digits=3))
-    # AUC si es binario
     if hasattr(pipe, "predict_proba"):
         proba = pipe.predict_proba(Xte)[:, 1]
         print(f"[Test] ROC-AUC: {roc_auc_score(yte, proba):.3f}")
@@ -113,7 +112,6 @@ def save_lda_results_pipeline(
     outdir: str = "../../assets/lda_results_eigen",
     model_name: str = "LDA-eigen",
     FEATURES: Optional[list] = None,
-    # para CV (evita variables globales)
     X_all: Optional[pd.DataFrame] = None,
     y_all: Optional[pd.Series] = None,
     make_pr_curve: bool = True,
@@ -124,17 +122,12 @@ def save_lda_results_pipeline(
     os.makedirs(outdir, exist_ok=True)
     outdir = Path(outdir)
 
-    # ---------- Acceso a pasos ----------
-    if "pre" not in pipe.named_steps or "lda" not in pipe.named_steps:
-        raise ValueError("El pipeline debe tener pasos 'pre' y 'lda' (en ese orden lógico).")
     preproc = pipe.named_steps["pre"]
     lda     = pipe.named_steps["lda"]
 
     if FEATURES is None:
-        # intentar deducir desde Xtr
         FEATURES = list(Xtr.columns)
 
-    # ---------- Proyecciones LD ----------
     Xtr_pre = preproc.transform(Xtr)
     Xte_pre = preproc.transform(Xte)
 
@@ -143,7 +136,6 @@ def save_lda_results_pipeline(
         Z_te = lda.transform(Xte_pre)
         proj_cols = [f"LD{i+1}" for i in range(Z_tr.shape[1])]
     except NotImplementedError:
-        # fallback (no debería ocurrir con solver='eigen')
         Z_tr = lda.decision_function(Xtr_pre).reshape(-1, 1)
         Z_te = lda.decision_function(Xte_pre).reshape(-1, 1)
         proj_cols = ["score"]
@@ -153,7 +145,6 @@ def save_lda_results_pipeline(
     pd.DataFrame(Z_te, columns=proj_cols, index=Xte.index).assign(y=yte.values) \
       .to_csv(outdir / f"{model_name}_proj_test.csv")
 
-    # ---------- Parámetros / funciones discriminantes ----------
     means_ = pd.DataFrame(lda.means_, columns=FEATURES)
     means_["class"] = lda.classes_
     means_.to_csv(outdir / f"{model_name}_class_means.csv", index=False)
@@ -161,7 +152,6 @@ def save_lda_results_pipeline(
     pd.Series(lda.priors_, index=lda.classes_, name="prior") \
       .to_csv(outdir / f"{model_name}_class_priors.csv")
 
-    # δ_k(x) = x^T Ak + bk, con Ak = Σ^{-1} μ_k y bk = -1/2 μ_k^T Σ^{-1} μ_k + log π_k
     from numpy.linalg import inv
     mu = lda.means_
     priors = lda.priors_
@@ -179,7 +169,6 @@ def save_lda_results_pipeline(
         pd.DataFrame(lda.scalings_, index=FEATURES) \
           .to_csv(outdir / f"{model_name}_scalings.csv")
 
-    # ---------- Predicciones y métricas base ----------
     yhat_tr = pipe.predict(Xtr)
     yhat_te = pipe.predict(Xte)
 
@@ -201,11 +190,10 @@ def save_lda_results_pipeline(
     pd.DataFrame(rep_tr).to_csv(outdir / f"{model_name}_report_train.csv")
     pd.DataFrame(rep_te).to_csv(outdir / f"{model_name}_report_test.csv")
 
-    # ---------- Predicciones detalladas (train/test) ----------
     pred_train = pd.DataFrame({"y_true": ytr.values, "y_pred": yhat_tr}, index=Xtr.index)
     pred_test  = pd.DataFrame({"y_true": yte.values, "y_pred": yhat_te}, index=Xte.index)
 
-    if hasattr(pipe, "predict_proba"):  # LDA sí lo tiene
+    if hasattr(pipe, "predict_proba"):
         proba_tr = pipe.predict_proba(Xtr)
         proba_te = pipe.predict_proba(Xte)
         class_labels = lda.classes_
@@ -217,16 +205,13 @@ def save_lda_results_pipeline(
     pred_train.to_csv(outdir / f"{model_name}_pred_train.csv")
     pred_test.to_csv(outdir / f"{model_name}_pred_test.csv")
 
-    # ---------- Gráficas: ROC, PR, Sens/Spec ----------
     metrics = {}
     is_binary = (len(lda.classes_) == 2)
     if is_binary and hasattr(pipe, "predict_proba"):
-        p_pos = pred_test.filter(like="p_").iloc[:, -1].values  # última columna p_<clase positiva>
-        # Heurística: si existen p_True y p_False, toma p_True
+        p_pos = pred_test.filter(like="p_").iloc[:, -1].values
         if "p_True" in pred_test.columns:
             p_pos = pred_test["p_True"].values
 
-        # ROC
         try:
             metrics["roc_auc_test"] = float(roc_auc_score(yte, p_pos))
             RocCurveDisplay.from_predictions(yte, p_pos)
@@ -237,7 +222,6 @@ def save_lda_results_pipeline(
         except Exception:
             pass
 
-        # Precision–Recall
         if make_pr_curve:
             prec, rec, _ = precision_recall_curve(yte, p_pos)
             ap = average_precision_score(yte, p_pos)
@@ -250,7 +234,6 @@ def save_lda_results_pipeline(
             plt.close()
             metrics["average_precision_test"] = float(ap)
 
-        # Sensibilidad/Especificidad vs umbral
         if make_thresh_curve:
             def sens_spec_at_threshold(y, p, thr):
                 yhat = (p >= thr).astype(int)
@@ -275,7 +258,6 @@ def save_lda_results_pipeline(
             plt.savefig(outdir / f"{model_name}_sens_spec_vs_threshold.png", dpi=150)
             plt.close()
 
-    # ---------- CV (si se provee X_all, y_all) ----------
     if (X_all is not None) and (y_all is not None):
         cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
         acc_cv = cross_val_score(pipe, X_all, y_all, cv=cv, scoring="accuracy")
@@ -285,7 +267,6 @@ def save_lda_results_pipeline(
     with open(outdir / f"{model_name}_metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
 
-    # ---------- Histogramas LD1 en test ----------
     plt.figure(figsize=(6, 4))
     for cls in np.unique(yte):
         m = (yte.values if hasattr(yte, "values") else yte) == cls
@@ -297,7 +278,6 @@ def save_lda_results_pipeline(
     plt.savefig(outdir / f"{model_name}_scores_hist_test.png", dpi=150)
     plt.close()
 
-    # ---------- Scatter LD1–LD2 (si hay ≥2 LD) ----------
     if Z_te.shape[1] >= 2:
         plt.figure(figsize=(5.5, 5))
         for cls in np.unique(yte):
@@ -311,7 +291,6 @@ def save_lda_results_pipeline(
         plt.savefig(outdir / f"{model_name}_scatter_LD_test.png", dpi=150)
         plt.close()
 
-    # ---------- Heatmap simple de matriz de confusión (test) ----------
     if make_conf_heatmap:
         cm = cm_test.values
         fig, ax = plt.subplots(figsize=(4.6, 4.0))
@@ -326,7 +305,6 @@ def save_lda_results_pipeline(
         plt.savefig(outdir / f"{model_name}_confusion_test_heatmap.png", dpi=150)
         plt.close()
 
-    # ---------- Barplot de |loadings| (promedio por clase) ----------
     if make_loadings_plot:
         feat_cols = [c for c in Ak_df.columns if c != "b_k"]
         abs_mean = Ak_df[feat_cols].abs().mean(axis=0).sort_values(ascending=True)
