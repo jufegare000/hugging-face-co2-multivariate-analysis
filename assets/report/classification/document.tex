@@ -30,17 +30,20 @@
 \begin{document}
 	\maketitle
 
-	\begin{abstract}
-
-	\end{abstract}
+\begin{abstract}
+	This study presents a comprehensive classification analysis of artificial intelligence models based on their carbon footprint and performance metrics. A workflow was implemented, beginning with an unsupervised cluster analysis (hierarchical and k-means) to identify the intrinsic data structure, which revealed that model popularity (\texttt{downloads}, \texttt{likes}) is the primary natural segmentation factor. Subsequently, the feasibility of Linear Discriminant Analysis (LDA) was assessed through a multivariate normality diagnostic, which showed significant deviations and justified the use of a regularized variant. Finally, the performance of LDA was compared against two non-linear models—a Support Vector Machine with an RBF kernel (SVM-RBF) and Gradient Boosting (GB)—to predict a binary "fairness" label (\texttt{is\_fair}). The results demonstrate that while Gradient Boosting achieves perfect predictive accuracy (AUC=1.000), regularized LDA offers the best interpretability, identifying \texttt{performance\_score} and \texttt{co2\_eq\_emissions} as the key discriminant factors. The work concludes that the optimal model selection depends on the objective: maximum precision (GB) or phenomenon understanding (LDA).
+\end{abstract}
 
 	\begin{IEEEkeywords}
-		Cluster analysis, K-means, Classification models, 
+		GreenAI, Cluster analysis, K-means, Classification models, Linear analysis, Non-linear analysis
 	\end{IEEEkeywords}
 
 
-	\section{Introduction}
+\section{Introduction}
 
+In the current era of artificial intelligence, the evaluation of models transcends traditional performance metrics. The growing awareness of the environmental impact of large-scale computations has given rise to the concept of "Green AI," which advocates for a balance between predictive efficacy and resource efficiency. This work addresses this issue by analyzing the \texttt{HFCO2.csv} dataset, derived from a CO$_{2}$ emissions report on the Hugging Face platform.
+
+The primary objective is twofold: first, to explore the underlying structure of a catalog of AI models to understand how they naturally group together, and second, to build a supervised classification model capable of predicting whether a model is "fair" (\texttt{is\_fair}), a derived label that relates its performance to its carbon footprint. To achieve this, a rigorous methodology is followed, including cluster analysis, diagnosis of statistical assumptions such as multivariate normality, and a systematic comparison between an interpretable linear model (Linear Discriminant Analysis) and high-performance non-linear alternatives (SVM and Gradient Boosting). This comprehensive approach not only seeks to identify the most accurate classifier but also to extract meaningful insights about the characteristics that define an AI model as both efficient and effective.
 
 
 	\section{Methodology}
@@ -619,8 +622,17 @@ Gradient Boosting is recommended as the primary model given its dominant AUC, AP
 F1, accuracy, and calibration. SVM–RBF is a strong runner-up and may be preferable
 when model simplicity or margin-based robustness is desired. LDA remains valuable
 as an interpretable baseline and for feature understanding via discriminant loadings.
-	\section{Conclusions}
-	\label{sec:conclusion}
+\section*{Conclusions}
+
+Following a thorough and multifaceted analysis of the dataset, the following fundamental conclusions have been drawn:
+
+\begin{enumerate}
+	\item \textbf{The unsupervised data structure is dominated by popularity:} Both hierarchical and k-means clustering consistently revealed that the \texttt{downloads} and \texttt{likes} variables are the most discriminating factors. This indicates that the natural grouping of models on the platform corresponds to their usage and engagement levels, rather than a balance between their performance and environmental cost.
+	
+	\item \textbf{Linear Discriminant Analysis (LDA) is the best tool for interpretation:} Although the data violate the assumption of multivariate normality, the implementation of a regularized LDA (with shrinkage) proved to be a robust and, most importantly, highly interpretable baseline. The analysis of its coefficients (loadings) allowed for the clear identification of \texttt{performance\_score} and \texttt{co2\_eq\_emissions} as the main drivers for separating "fair" (\texttt{is\_fair=True}) models from those that are not. This ability to explain the \textit{why} behind the classification is its greatest strength.
+	
+	\item \textbf{Gradient Boosting offers superior predictive performance:} In the supervised classification task, the Gradient Boosting model emerged as the clear winner, achieving perfect metrics (AUC, F1-Score, and Accuracy of 1.000) on the test set. This performance, coupled with excellent probability calibration (low Brier score), positions it as the ideal choice for applications where prediction accuracy is the primary objective.
+\end{enumerate}
 
 
 	\bibliographystyle{IEEEtran}

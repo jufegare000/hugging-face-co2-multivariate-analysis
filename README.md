@@ -5,21 +5,9 @@
 
 Este repositorio contiene un análisis estadístico multivariado sobre los factores que impactan la huella de carbono (CO2e) durante el entrenamiento de modelos de Machine Learning. El estudio se basa en un conjunto de datos extraído del popular repositorio **Hugging Face Hub**, con el fin de identificar patrones y relaciones clave entre las características de un modelo y su impacto ambiental.
 
-## 🛠️ Metodología y Técnicas
-
-El análisis explora la relación entre las emisiones de CO2 y diversas variables como el tamaño del modelo, el tamaño del dataset y las métricas de rendimiento. Se utilizaron las siguientes técnicas:
-
-**Preprocesamiento y Limpieza de Datos:** Scripts en Python (usando Pandas y numpy) para transformar el dataset crudo en un formato numérico y analizable.
-
-**Análisis de Correlación:** Cálculo y visualización de la matriz de correlación para identificar las relaciones lineales más fuertes entre las variables.
-
-**Análisis de Componentes Principales (ACP):** Técnica de reducción de dimensionalidad para encontrar las principales fuentes de varianza en los datos.
-
-**Análisis Factorial (AF):** Método para descubrir factores latentes o constructos subyacentes que explican los patrones de correlación.
-
 ## 📂 Contenido del Repositorio
 
-**/assets**: Contiene el dataset original (HFCO2.csv), el archivo preprocesado y los resultados de las matrices.
+**/assets**: Contiene el dataset original (HFCO2.csv), el archivo preprocesado y los resultados de las matrices. También contiene los reportes
 
 **/notebooks**: Incluye los notebooks de jupyter en Python utilizados para el análisis estadísticos.
 
@@ -37,5 +25,6 @@ pip install -r requirements.txt
 ```
 
 ## Reporte del proyecto
-El resultado del análisis puede verse en la siguiente ruta:
-[Multivariated_Data_Analysis.pdf](assets/Multivariated_Data_Analysis.pdf)
+Resultados del análisis puede verse en la siguiente ruta:
+[Components and factor analysis](assets/Multivariated_Data_Analysis.pdf)
+[Classification Analysis](assets/report/classification/document.pdf)
