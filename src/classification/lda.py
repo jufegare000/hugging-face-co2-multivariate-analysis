@@ -72,13 +72,8 @@ pipe_lda = Pipeline([
     ("pre", pre),
     ("lda", LinearDiscriminantAnalysis(solver="eigen", shrinkage="auto", store_covariance=True))
 ])
-pipe_qda = Pipeline([
-    ("pre", pre),
-    ("qda", QuadraticDiscriminantAnalysis(reg_param=0.1, store_covariance=True))
-])
 
 pipe_lda.fit(X_tr, y_tr)
-pipe_qda.fit(X_tr, y_tr)
 
 
 def eval_pipe(name, pipe, Xtr, ytr, Xte, yte):
@@ -95,13 +90,10 @@ def eval_pipe(name, pipe, Xtr, ytr, Xte, yte):
 
 
 eval_pipe("LDA (eigen+shrinkage)", pipe_lda, X_tr, y_tr, X_te, y_te)
-eval_pipe("QDA (reg=0.1)", pipe_qda, X_tr, y_tr, X_te, y_te)
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 lda_cv = cross_val_score(pipe_lda, X_df, y_sr, cv=cv, scoring="accuracy")
-qda_cv = cross_val_score(pipe_qda, X_df, y_sr, cv=cv, scoring="accuracy")
 print(f"LDA CV accuracy: {lda_cv.mean():.3f} ± {lda_cv.std():.3f}")
-print(f"QDA CV accuracy: {qda_cv.mean():.3f} ± {qda_cv.std():.3f}")
 
 
 def save_lda_results_pipeline(

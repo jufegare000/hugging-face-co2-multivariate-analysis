@@ -11,6 +11,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{booktabs,siunitx,makecell,multirow,tabularx}
+\usepackage[para,online,flushleft]{threeparttable}
 \sisetup{
 	group-separator = {\,},   
 	group-minimum-digits = 4,
@@ -112,7 +113,29 @@ non–normality.
 
 Multivariate normality was examined via Mahalanobis Q–Q diagnostics (globally and by class). Because clear departures from normality were observed, regularized discriminants were preferred. Linear Discriminant Analysis (LDA) with automatic shrinkage (and, for projections, the \texttt{eigen} solver) and Quadratic Discriminant Analysis (QDA) with mild regularization were fit on a stratified train/test split. Performance was summarized with confusion matrices, precision/recall/F1, ROC–AUC, and 5–fold stratified cross–validation. Model parameters (priors, class means, coefficients, scalings), LD scores, and plots (ROC, score histograms, dendrograms) were exported to files to enable reporting and reproducibility.
 
+\subsection{Non-linear models comparison)}
+A supervised classification workflow was implemented to benchmark a linear baseline
+(Linear Discriminant Analysis, LDA) against two non-linear alternatives:
+an RBF–kernel Support Vector Machine (SVM–RBF) and Gradient Boosting (GB).
+The target was the binary label \texttt{is\_fair}; predictors were the numeric
+performance–cost variables used in previous sections. Missing values were removed,
+then features were transformed with $\log(1+x)$ (for skewed counts: CO$_2$, likes,
+downloads, size) and standardized (zero mean, unit variance). A stratified
+train/test split (70/30) preserved the empirical class imbalance. 
 
+Models were trained in scikit-learn as follows.
+LDA used the \texttt{eigen} solver with automatic shrinkage, providing a robust
+shared covariance estimate and interpretable discriminant directions. SVM–RBF used
+probability calibration (\texttt{probability=True}) and an RBF kernel; GB used
+logistic loss with modest depth and learning rate (standard defaults), both selected
+via stratified 5-fold cross-validation (CV) on the training fold. Evaluation focused
+on rank-based and decision-based criteria: AUC(ROC), average precision (AP) for the
+positive class (\emph{True}), F1 for the positive class, overall accuracy, and
+Brier score (probability calibration). Error structure was inspected through
+confusion matrices. For comparability, models were scored on the same held-out test
+set; CV accuracy was also reported to assess stability across resamples. Curves
+(ROC and Precision–Recall) and panels (confusion matrices) were produced for visual
+diagnostics and threshold selection.
 	\section{Results and discussions}
 
 	\label{sec:results}
@@ -279,7 +302,7 @@ Tables~\ref{tab:profile-a}–\ref{tab:profile-c} report \emph{original-unit} pro
 \textit{performance\_score}, \textit{co2\_eq\_emissions}, \textit{likes}, \textit{downloads} and \textit{size}. For brevity,
 we include the robust alternative (\emph{Average–Euclid, $k=4$}); the $z$–centroids and the $|z|$ ranking (downloads $\to$ likes)
 appear in the Supplement.
-\begin{table}[t]
+\begin{table}[H]
 	\centering
 	\small
 	\caption{Cluster profiles (original units): performance and CO$_2$}
@@ -300,7 +323,7 @@ appear in the Supplement.
 	\end{tabular}
 \end{table}
 
-\begin{table}[t]
+\begin{table}[H]
 	\centering
 	\small
 	\caption{Cluster profiles (original units): likes and downloads}
@@ -328,7 +351,7 @@ appear in the Supplement.
 \end{table}
 
 
-\begin{table}[t]
+\begin{table}[H]
 	\centering
 	\small
 	\caption{Cluster profiles (original units): size ($\times 10^{8}$)}
@@ -395,7 +418,7 @@ Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification
 (see Supplement for the full tables).
 
 
-\begin{figure}[t]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=.48\linewidth]{assets/silhouette_vs_k.png}\hfill
 	\includegraphics[width=.48\linewidth]{assets/ch_vs_k.png}
@@ -403,7 +426,7 @@ Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification
 	\label{fig:silhouette-kmeans}\label{fig:ch-kmeans}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=.48\linewidth]{assets/dbi_vs_k.png}\hfill
 	\includegraphics[width=.48\linewidth]{assets/elbow_inertia.png}
@@ -411,7 +434,7 @@ Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification
 	\label{fig:dbi-kmeans}\label{fig:elbow-kmeans}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=.55\linewidth]{assets/cluster_sizes_k2.png}
 	\caption{Cluster sizes for the selected solution ($k{=}2$).}
@@ -474,21 +497,21 @@ regularization; robust or nonparametric alternatives are better aligned with the
 structure.
 
 
-\paragraph{Results and discussion (LDA).}
+\paragraph{LDA}
 An LDA classifier was trained on a stratified train/test split using a \texttt{log1p}--standardization preprocessing pipeline and the \texttt{eigen} solver with automatic shrinkage. Class priors reflected moderate imbalance (False: $72.9\%$, True: $27.1\%$) and were preserved during training. On the held-out test set ($n=259$), the model reached an overall accuracy of \textbf{0.919}; the ROC curve achieved an \textbf{AUC of 0.983} (Fig.~\ref{fig:lda-roc}), indicating excellent ranking performance across thresholds. Five-fold stratified cross-validation over the full dataset yielded a mean accuracy of \textbf{0.925} ($\pm\,0.021$), supporting stability under resampling.
 
 Inspection of the linear discriminants $\delta_k(x)=x^\top A_k+b_k$ showed the largest absolute coefficients in $A_k$ for \emph{performance\_score}, \emph{co2\_eq\_emissions}, and \emph{size}, in that order, which identifies these variables as the principal drivers of separation once features are transformed. The LD1 score distributions for both classes are clearly separated with only a narrow overlap (Fig.~\ref{fig:lda-geom}\,\subref{fig:lda-scores}), consistent with the near-perfect AUC. The confusion matrix on test data (TN$=184$, FP$=5$, FN$=16$, TP$=54$; Fig.~\ref{fig:lda-geom}\,\subref{fig:lda-cm}) indicates very high specificity for the majority class and competitive recall for the minority class; the precision--recall trade-off at the default threshold is therefore reasonable. If fairness identification (True) must be prioritized, the operating point can be shifted to increase sensitivity with limited loss in overall accuracy.
 
 Overall, LDA with shrinkage produced a parsimonious, interpretable boundary, strong generalization (cross-validated accuracy $\approx0.93$), and coherent variable importance (Fig.~\ref{fig:lda-loadings}) highlighting performance and carbon-cost factors as the dominant discriminants. These outcomes justify LDA as a robust linear baseline; more complex models (e.g., QDA or non-linear kernels) would only be warranted if heteroscedasticity or curvature were demonstrably exploitable for additional gains.
 
-\begin{figure}[t]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=.72\linewidth]{assets/LDA-eigen_roc_test.png}
 	\caption{ROC curve on the test set (AUC $\approx 0.98$).}
 	\label{fig:lda-roc}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
 	\centering
 	\begin{subfigure}{.48\linewidth}
 		\centering
@@ -507,7 +530,7 @@ Overall, LDA with shrinkage produced a parsimonious, interpretable boundary, str
 	\label{fig:lda-geom}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=.72\linewidth]{assets/LDA-eigen_loadings_abs_bar.png}
 	\caption{Absolute loadings on LD1 (averaged across classes). Performance and CO$_2$ dominate; size and downloads are secondary; likes is negligible.}
@@ -515,7 +538,87 @@ Overall, LDA with shrinkage produced a parsimonious, interpretable boundary, str
 \end{figure}
 
 
+\subsection{Results and Discussion}
+Table~\ref{tab:clf-compare} summarizes the out-of-sample performance. The linear
+baseline (LDA) achieved strong discrimination (AUC $=0.983$) with solid AP for the
+minority class (AP$_{\text{True}}=0.958$) and good accuracy ($0.919$). The
+non-linear models improved upon the baseline: SVM–RBF reached AUC $=0.991$,
+AP$_{\text{True}}=0.979$, and Accuracy $=0.954$, with a Brier score of $0.033$
+(acceptable calibration). Gradient Boosting performed best across all metrics with
+AUC $=1.000$, AP$_{\text{True}}=1.000$, F1$_{\text{True}}=1.000$,
+Accuracy $=1.000$, and a very low Brier score ($2.3\times10^{-5}$), consistent with
+near-perfect separability on the test fold.
 
+The precision–recall panels in Fig.~\ref{fig:pr-nonlinear} show uniformly higher
+precision at a given recall for Gradient Boosting, while the confusion matrices in
+Fig.~\ref{fig:cm-nonlinear} reveal zero errors for GB on this hold-out, in contrast
+to a small number of false negatives for SVM–RBF. These gains, together with the
+excellent calibration (low Brier), support GB as the top performer on this dataset.
+Because perfect test scores can occasionally arise from random favorability,
+additional repeated or nested CV is recommended to rule out accidental overfitting
+and to confirm the robustness of the selection. In operational settings, decision
+thresholds can be tuned on the calibrated probabilities to trade specificity for
+sensitivity when detecting the positive (``fair'') class is mission-critical.
+
+
+\begin{table}[H]
+	\centering
+	\sisetup{table-number-alignment=center, round-mode=places, round-precision=3, table-format=1.5}
+	\caption{Test performance and  accuracy cross-validated (CV). AP is Area Precision Recall}
+	\label{tab:perf-all}
+	\begin{threeparttable}
+		\begin{tabular}{l SS S S S}
+			\toprule
+			\multirow{2}{*}{\textbf{Model}} & \multicolumn{2}{c}{\textbf{AUC}} & \textbf{AP\textsubscript{True}} & \textbf{F1\textsubscript{True}} & \textbf{Accuracy} \\
+			\cmidrule(lr){2-3}
+			& {\textbf{CV}} & {\textbf{test}} & & & \\
+			\midrule
+			LDA       & 0.925   & 0.983   & 0.958   & 0.837   & 0.919 \\
+			SVM--RBF  & 0.98793 & 0.99127 & 0.97885 & 0.91177 & 0.95367 \\
+			GradBoost & 0.99994 & 1.00000 & 1.00000 & 1.00000 & 1.00000 \\
+			\bottomrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{.48\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{assets/svm_pr.png}% <- replace with your path
+		\caption{SVM--RBF (AP $\approx$ 0.98)}
+	\end{subfigure}\hfill
+	\begin{subfigure}{.48\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{assets/gb_pr.png}% <- replace with your path
+		\caption{Gradient Boosting (AP $\approx$ 1.00)}
+	\end{subfigure}
+	\caption{Precision--Recall curves on the test set for the positive class (\emph{True}).}
+	\label{fig:pr-nonlinear}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{.48\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{assets/cm_svmrbf_test.png}% <- replace with your path
+		\caption{SVM--RBF}
+	\end{subfigure}\hfill
+	\begin{subfigure}{.48\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{assets/gb_cm.png}% <- replace with your path
+		\caption{Gradient Boosting}
+	\end{subfigure}
+	\caption{Confusion matrices on the held-out test set.}
+	\label{fig:cm-nonlinear}
+\end{figure}
+
+\paragraph{Recommendation.}
+Gradient Boosting is recommended as the primary model given its dominant AUC, AP,
+F1, accuracy, and calibration. SVM–RBF is a strong runner-up and may be preferable
+when model simplicity or margin-based robustness is desired. LDA remains valuable
+as an interpretable baseline and for feature understanding via discriminant loadings.
 	\section{Conclusions}
 	\label{sec:conclusion}
 
