@@ -28,5 +28,4 @@ pip install -r requirements.txt
 Resultados del análisis pueden verse en las siguientes ruta:
 <br>
 - [Components and factor analysis](assets/Multivariated_Data_Analysis.pdf)
-<br>
 - [Classification Analysis](assets/report/classification/document.pdf)
