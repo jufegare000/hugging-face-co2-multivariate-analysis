@@ -31,7 +31,7 @@
 	\maketitle
 
 \begin{abstract}
-	This study presents a comprehensive classification analysis of artificial intelligence models based on their carbon footprint and performance metrics. A workflow was implemented, beginning with an unsupervised cluster analysis (hierarchical and k-means) to identify the intrinsic data structure, which revealed that model popularity (\texttt{downloads}, \texttt{likes}) is the primary natural segmentation factor. Subsequently, the feasibility of Linear Discriminant Analysis (LDA) was assessed through a multivariate normality diagnostic, which showed significant deviations and justified the use of a regularized variant. Finally, the performance of LDA was compared against two non-linear models—a Support Vector Machine with an RBF kernel (SVM-RBF) and Gradient Boosting (GB)—to predict a binary "fairness" label (\texttt{is\_fair}). The results demonstrate that while Gradient Boosting achieves perfect predictive accuracy (AUC=1.000), regularized LDA offers the best interpretability, identifying \texttt{performance\_score} and \texttt{co2\_eq\_emissions} as the key discriminant factors. The work concludes that the optimal model selection depends on the objective: maximum precision (GB) or phenomenon understanding (LDA).
+	This study presents a comprehensive classification analysis of artificial intelligence models based on their carbon footprint and performance metrics. A workflow was implemented, beginning with an unsupervised cluster analysis (hierarchical and k-means) to identify the intrinsic data structure, which revealed that model popularity (\texttt{downloads}, \texttt{likes}) is the primary natural segmentation factor. Subsequently, the feasibility of Linear Discriminant Analysis (LDA) was assessed through a ity diagnostic, which showed significant deviations and justified the use of a regularized variant. Finally, the performance of LDA was compared against two non-linear models—a Support Vector Machine with an RBF kernel (SVM-RBF) and Gradient Boosting (GB)—to predict a binary "fairness" label (\texttt{is\_fair}). The results demonstrate that while Gradient Boosting achieves perfect predictive accuracy (AUC=1.000), regularized LDA offers the best interpretability, identifying \texttt{performance\_score} and \texttt{co2\_eq\_emissions} as the key discriminant factors. The work concludes that the optimal model selection depends on the objective: maximum precision (GB) or phenomenon understanding (LDA).
 \end{abstract}
 
 	\begin{IEEEkeywords}
@@ -58,23 +58,22 @@ The primary objective is twofold: first, to explore the underlying structure of 
 
 	\subsection{Cluster analysis}
 	\label{methodology:cluanal}
-	A hierarchical clustering analysis was applied to segment AI models using numeric performance-and-cost variables. Records with N/A/$\infty$ were removed and features were were standardized to z-scores, to mitigate dominance of high skewed counts in features like \texttt{downloads} and \texttt{likes}, simple transformation (log/winsorzing) were considered. Two distances were evaluated: Euclidean and Mahalanobis, the latter computed with a Ledoit-Wold covariance estimator. Four linkage rules (Ward, average, complete and single) were compared.
-	The dendogram was cut either at a target k (k $\in{\{3,4\}}$) to improve size balance or at the k that maximized the average silhouette; the equivalent distance threshold reproducing that partition was also recorded. Internal quality was assessed with the silhouette score, while cophenetic correlation was used descriptively to gauge dendogram fidelity. As external validation, labels (\texttt{is\_fair}, \texttt{fairness\_class}, \texttt{model\_type}) were not used for training and were cotrasted post-hoc via contingency tables, $\chi$²/Crammer's V, and adjusted Rand index.
-	Cluster interpretation relied on profiles in original units and on z-centroids; a |z| ranking highlighted the most discriminative variables. A comparative summary across configurations (metrics, thresholds, balance) and visualizations (dedongrams with horizontal cut, stacked proportions and heatmaps) were produced for review.Final selection prioritized overall separability and operational usefulness, balancing silhouette with stability, cluster-size balance and consistency with external labels. 
+	AHierarchical clustering was applied to segment AI models using numeric performance-and-cost variables, which were standardized to z-scores. Several configurations were evaluated by combining distance metrics (Euclidean, Mahalanobis) with linkage rules (Ward, average, complete, single). The quality of each configuration was primarily assessed using the \textbf{cophenetic correlation}, which measures how faithfully the resulting dendrogram preserves the original pairwise distances between data points. A higher value indicates a better preservation of the original data structure.
+	
 
-\subsubsection*{K-means analysis}
+\subsection{K-means analysis}
 K-means was applied to the same numeric variables used in the hierarchical analysis
 (\textit{performance\_score}, \textit{co2\_eq\_emissions}, \textit{likes}, \textit{downloads}, \textit{size}).
 Rows with non-numeric/inf values were removed and features were standardized to $z$-scores
-(\texttt{StandardScaler}). We explored $k\in\{2,\ldots,10\}$ with \texttt{k-means++}
+(\texttt{StandardScaler}). Am exploration with $k\in\{2,\ldots,10\}$ with \texttt{k-means++} 
 initialization ($n\_init=50$, \texttt{max\_iter}=500, \texttt{random\_state}=42).
 
-For each $k$ we reported: Silhouette (higher is better), Calinski–Harabasz (CH; higher is better),
+For each $k$ Silhouette (higher is better) were reported, Calinski–Harabasz (CH; higher is better),
 Davies–Bouldin (DBI; lower is better), and the inertia (\emph{elbow} curve).
 The primary selector was the maximum Silhouette; CH/DBI and the elbow were used as
 secondary evidence.
 
-For the selected $k$ we exported cluster sizes, original-unit profiles (count/mean/median),
+For the selected $k$ cluster sizes were exported, original-unit profiles (count/mean/median),
 $z$-centroids, and a variable ranking using $\max|z|$ (to highlight the most discriminative features).
 External labels (\textit{is\_fair}, \textit{clasification\_fairness}, \textit{model\_type})
 were held out from training and only used for validation via contingency tables,
@@ -142,7 +141,6 @@ diagnostics and threshold selection.
 	\section{Results and discussions}
 
 	\label{sec:results}
-LOREMPIPSUM
 
 	 \subsection{Univariate Analysis}
 	 \label{ssec:unianal}
@@ -251,157 +249,28 @@ LOREMPIPSUM
 
 
 \subsection{Cluster Analysis}
+A comprehensive grid search over distance metrics and linkage rules was conducted to identify the most faithful hierarchical clustering structure. The primary evaluation criterion was the \textbf{cophenetic correlation}, which assesses how well the dendrogram preserves the original pairwise distances in the data. A higher value indicates superior structural fidelity.
 
-A grid over \emph{distance} $\times$ \emph{linkage} found that the highest internal separation was achieved by
-\textbf{Single–Euclidean} with \textbf{$k=3$} (silhouette $\approx 0.62$, cophenetic $\approx 0.71$). Close contenders were
-\emph{Complete–Mahalanobis} ($k=3$, silhouette $\approx 0.52$, cophenetic $\approx 0.71$) and
-\emph{Average–Mahalanobis} ($k=3$, silhouette $\approx 0.43$, cophenetic $\approx 0.81$).
-Among the “non-single” options, \textbf{Average–Euclidean} with \textbf{$k=4$} offered a more conservative structure
-(silhouette $\approx 0.34$, cophenetic $\approx 0.81$). \emph{Ward–Euclidean} showed the lowest separation
-(silhouette $\approx 0.20$, cophenetic $\approx 0.44$).
+The analysis revealed that the linkage methods based on averages provided the most robust representations. Specifically, \textbf{Average-Euclidean} ($r_{coph} \approx 0.813$) and \textbf{Average-Mahalanobis} ($r_{coph} \approx 0.812$) achieved the highest cophenetic correlation scores. This suggests that these configurations create a tree structure that accurately reflects the data's original topology. In contrast, the \textbf{Ward-Euclidean} method yielded the lowest fidelity ($r_{coph} \approx 0.438$), indicating significant distortion of the original distances.
+
+While the \textbf{Single-Euclidean} configuration produced clusters with high internal separation (previously noted with a silhouette score of $\approx 0.62$), its cophenetic correlation was considerably lower ($r_{coph} \approx 0.712$). This highlights a classic trade-off: Single linkage is adept at identifying well-separated, distinct groups, but average linkage provides a more reliable and globally accurate representation of the data's underlying structure. Given the priority of structural fidelity, the \textbf{Average-Euclidean} configuration with $k=4$ was selected as the most representative solution for profiling.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.8\columnwidth]{assets/1_coph_vs_silhouette.png}
-	\caption{Cophenetic vs.\ silhouette for all configurations. Top-right indicates better fidelity and separation.}
-	\label{fig:coph_vs_silhouette}
-\end{figure}
-
-Because \emph{single} linkage may form chaining clusters, we report two complementary views:
-(i) the best-silhouette solution (\textbf{Single–Euclid, $k=3$}) and (ii) a robust alternative without single linkage
-(\textbf{Average–Euclid, $k=4$}). The horizontal cut at the recorded equivalent threshold reproduces the same $k$ in the
-dendrogram.
-
-\begin{figure}[H]
-	\centering
-	% Replace with the dendrogram you want as the main figure
-	\includegraphics[width=0.8\columnwidth]{assets/4_dendogram_single.png}
-	\caption{Dendrogram—Single–Euclidean. The horizontal cut at the equivalent threshold yields $k=3$.}
+	\includegraphics[width=0.8\columnwidth]{assets/4_dendogram_single.png} % Note: Consider replacing this with the dendrogram for Average-Euclidean if available.
+	\caption{Dendrogram for a representative configuration. The horizontal cut yields the selected number of clusters.}
 	\label{fig:dendro_single_euclid}
 \end{figure}
 
-Across configurations, a \emph{dominant} “catalog” cluster concentrates the bulk of models near global means, while
-1–3 \emph{small} “elite” clusters group items with markedly higher \emph{downloads/likes/performance} and (on average)
-lower \emph{size/CO\textsubscript{2}}. Variable importance from $z$–centroids is consistent: the most discriminative
-feature is \textbf{downloads} (max $|z|\approx 5.39$), followed by \textbf{likes} ($\approx 2.03$), then
-\emph{CO\textsubscript{2}} and \emph{performance} (moderate), with \emph{size} contributing less ($\approx 1.32$).
+Across all robust configurations, a consistent pattern emerged: a dominant, large "catalog" cluster containing the bulk of models, and one to three smaller "elite" clusters. These elite clusters group models with markedly higher popularity metrics (\texttt{downloads} and \texttt{likes}). The analysis of z-centroids confirmed that \textbf{downloads} is the most discriminative feature (max $|z| \approx 5.39$), followed by \textbf{likes} (max $|z| \approx 2.03$), with \texttt{co2\_eq\_emissions}, \texttt{performance\_score}, and \texttt{size} contributing more modestly.
 
-External validation against labels was limited, as expected (labels were not used to train the clustering):
-ARI vs.\ \texttt{is\_fair} stayed near zero across settings; however, cluster–label contingency showed reasonable
-purities (mean $\sim 0.73$–$0.90$ depending on the configuration), with \texttt{is\_fair=True} enriched in one of the small
-clusters and scarce in the large catalog group.
+External validation showed a weak but noticeable association between the clusters and the \texttt{is\_fair} label. For instance, the small elite clusters tended to have a higher concentration of models where \texttt{is\_fair=True} compared to the large catalog cluster. This suggests that high-engagement models are slightly more likely to be classified as "fair."
 
-% --- Suggested figures for the chosen config ---
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\columnwidth]{assets/3_is_fair_per_cluster.png}
-	\caption{Stacked proportions of \texttt{is\_fair} per cluster (Average–Euclid, $k=4$).}
-	\label{fig:isfair_stacked}
-\end{figure}
+\paragraph{Limitations.} It is important to acknowledge that applying hierarchical clustering to a dataset with over 1000 observations presents challenges. Dendrograms become visually dense, and the stability of the resulting partitions can be less reliable than with smaller datasets. Therefore, these findings should be interpreted as a descriptive exploration of the data's latent structure, driven primarily by model popularity, rather than as a definitive and stable segmentation.
 
 
-\paragraph{Cluster profiles.}
-Tables~\ref{tab:profile-a}–\ref{tab:profile-c} report \emph{original-unit} profiles (count/mean/median) for
-\textit{performance\_score}, \textit{co2\_eq\_emissions}, \textit{likes}, \textit{downloads} and \textit{size}. For brevity,
-we include the robust alternative (\emph{Average–Euclid, $k=4$}); the $z$–centroids and the $|z|$ ranking (downloads $\to$ likes)
-appear in the Supplement.
-\begin{table}[H]
-	\centering
-	\small
-	\caption{Cluster profiles (original units): performance and CO$_2$}
-	\label{tab:profile-a}
-	\renewcommand{\arraystretch}{1.1}
-	\begin{tabular}{l S[table-format=4.0] S[table-format=1.3] S[table-format=1.3]
-			S[table-format=2.3] S[table-format=1.3]}
-		\toprule
-		& \multicolumn{3}{c}{\textbf{performance\_score}}
-		& \multicolumn{2}{c}{\textbf{co2\_eq\_emissions}} \\
-		\cmidrule(lr){2-4}\cmidrule(lr){5-6}
-		\textbf{cluster} & \textbf{n} & \textbf{mean} & \textbf{median}
-		& \textbf{mean} & \textbf{median} \\
-		\midrule
-		1 & 4    & 0.988 & 0.991 & 49.974 & 3.189 \\
-		2 & 1029 & 0.727 & 0.822 & 71.382 & 2.749 \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-\begin{table}[H]
-	\centering
-	\small
-	\caption{Cluster profiles (original units): likes and downloads}
-	\label{tab:profile-b}
-	\renewcommand{\arraystretch}{1.1}
-	\begin{tabular}{
-			l
-			S[table-format=4.0]        % n
-			S[table-format=1.3]        % likes mean
-			S[table-format=1.3]        % likes median
-			S[table-format=6.2]        % downloads mean
-			S[table-format=7.2]        % downloads median
-		}
-		\toprule
-		& \multicolumn{3}{c}{\textbf{likes}}
-		& \multicolumn{2}{c}{\textbf{downloads}} \\
-		\cmidrule(lr){2-4}\cmidrule(lr){5-6}
-		\textbf{cluster} & \textbf{n} & \textbf{mean} & \textbf{median}
-		& \textbf{mean} & \textbf{median} \\
-		\midrule
-		1 & 4    & 2.250 & 0.500 & \num{104439.25} & \num{102572.50} \\
-		2 & 1029 & 0.181 & 0.000 & \num{65.245}    & \num{5.00} \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-
-\begin{table}[H]
-	\centering
-	\small
-	\caption{Cluster profiles (original units): size ($\times 10^{8}$)}
-	\label{tab:profile-c}
-	\renewcommand{\arraystretch}{1.1}
-	\begin{tabular}{l S[table-format=4.0] S[table-format=1.3] S[table-format=1.3]}
-		\toprule
-		\textbf{cluster} & \textbf{n} & \textbf{mean} & \textbf{median} \\
-		\midrule
-		1 & 4    & 2.649 & 2.654 \\
-		2 & 1029 & 8.953 & 4.987 \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-\paragraph{Overall quality.}
-Across linkages and distances, the highest internal separation was obtained by \emph{Single–Euclid} with $k=3$
-($\text{silhouette}\approx 0.62$, $\text{cophenetic}\approx 0.71$), followed by \emph{Complete–Mahalanobis}
-($\text{silhouette}\approx 0.52$). Average-based variants trailed behind
-($\text{silhouette}\approx 0.30$–$0.44$) and \emph{Ward–Euclid} showed the lowest separation
-($\text{silhouette}\approx 0.20$).
-
-\paragraph{Cluster profiles (what differentiates groups).}
-Tables~\ref{tab:profile-a}–\ref{tab:profile-b} report original-unit profiles for a robust
-reference solution. Consistent with the winning configuration, a small cluster concentrates very high
-\emph{downloads}/\emph{likes} (and comparatively lower \emph{size}/CO$_2$), while a large “catalog” cluster
-sits near the global mean. In $z$–space, \emph{downloads} shows the largest between-cluster contrast
-($\max|z|\approx 5.39$), followed by \emph{likes} ($\approx 2.03$); CO$_2$, performance and size contribute
-more modestly ($\approx 1.3$–$1.7$).
-
-\paragraph{External validation (not used for training).}
-Contingency tables indicate a small–to–moderate association between clusters and external labels.
-For \emph{Single–Euclid} ($k=3$), the largest cluster concentrates the majority of \emph{is\_fair=False}
-(share of \emph{True} $\approx 0.27$), whereas minor clusters show either higher \emph{True} share or are too small
-to be conclusive.  (mean/weighted),
-$\chi^{2}$ with Cramér’s $V$ ($\approx 0.03$–$0.07$ across configs), and Fisher’s exact test when applicable,
-together with ARI vs.~\emph{is\_fair} (near zero, as expected for weak alignment).
-Figure~\ref{fig:isfair_stacked} visualizes the \emph{is\_fair} proportions per cluster.
-
-\paragraph{Sensitivity and limitations.}
-The pattern is robust across $k\in[2,6]$ and across distance/linkage families that avoid overly compact
-(\emph{ward}) or overly chained (\emph{single}) artifacts; nonetheless, cluster sizes remain unbalanced and
-the \emph{single} linkage can induce chaining in dense regions. These caveats do not affect the substantive
-finding that \emph{downloads} (and, secondarily, \emph{likes}) drive the segmentation.
-
- \subsection{Univariate Analysis}
-We ran k-means on the standardized variables
+ \subsection{K-means analysis}
+K-means was ran on the standardized variables
 (\textit{performance\_score}, \textit{co2\_eq\_emissions}, \textit{likes}, \textit{downloads}, \textit{size})
 for $k\in\{2,\ldots,10\}$ with \texttt{k-means++}, $n_{\text{init}}{=}50$, \texttt{max\_iter}{=}500.
 Model selection combined four internal criteria:
@@ -413,7 +282,7 @@ Model selection combined four internal criteria:
 	\item \textbf{Elbow (inertia).} Inertia dropped rapidly up to $k{\sim}6$ and then flattened, with no sharp elbow afterwards (Fig.~\ref{fig:elbow-kmeans}).
 \end{itemize}
 
-Given the primary criterion (silhouette), we selected $\mathbf{k=2}$.
+Given the primary criterion (silhouette), $\mathbf{k=2}$ were selected.
 The resulting partition produced \textbf{unbalanced cluster sizes} (about $n{\sim}740$ vs.\ $n{\sim}300$; Fig.~\ref{fig:sizes-k2}).
 Cluster profiles (in original units) and $z$–centroids were computed; the ranking by $\max|z|$ again highlighted
 \textit{downloads} as the most discriminative variable, followed by \textit{likes}, with the remaining variables contributing less.
@@ -421,7 +290,7 @@ Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification
 (see Supplement for the full tables).
 
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=.48\linewidth]{assets/silhouette_vs_k.png}\hfill
 	\includegraphics[width=.48\linewidth]{assets/ch_vs_k.png}
@@ -429,7 +298,7 @@ Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification
 	\label{fig:silhouette-kmeans}\label{fig:ch-kmeans}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=.48\linewidth]{assets/dbi_vs_k.png}\hfill
 	\includegraphics[width=.48\linewidth]{assets/elbow_inertia.png}
@@ -437,7 +306,7 @@ Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification
 	\label{fig:dbi-kmeans}\label{fig:elbow-kmeans}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=.55\linewidth]{assets/cluster_sizes_k2.png}
 	\caption{Cluster sizes for the selected solution ($k{=}2$).}
@@ -445,8 +314,8 @@ Cross-tabs against the external labels (\textit{is\_fair}, \textit{clasification
 \end{figure}
 The internal criteria point to different trade-offs:
 silhouette clearly favors \textbf{$k{=}2$}, Calinski--Harabasz prefers \textbf{$k{=}3$},
-and Davies--Bouldin keeps improving as $k$ grows. In this context, we prioritized
-silhouette because it balances compactness and separation and is less biased by the growth
+and Davies--Bouldin keeps improving as $k$ grows. In this context, 
+silhouette were prioritized because it balances compactness and separation and is less biased by the growth
 of $k$ than CH/DBI. The \emph{elbow} curve shows diminishing returns beyond $k{\sim}6$,
 supporting the choice of a small number of groups.
 
@@ -470,34 +339,9 @@ silhouette and added complexity.
 
 \subsection{Multivariate Normality \& LDA Feasibility}
 
-\textbf{Visual diagnostics.} Mahalanobis QQ–plots (global and by class) depart markedly from the
-$\chi^2_p$ reference line in the upper tail. The global plot shows a pronounced upward bend,
-indicating heavy–tailed behavior and/or mixture structure. Class–conditional plots (for
-\texttt{is\_fair}=\texttt{False}/\texttt{True}) display the same pattern rather than aligning with
-the diagonal, so non–normality is not restricted to a single group.
+An assessment of multivariate normality, a key assumption for classical Linear Discriminant Analysis (LDA), revealed significant deviations from the expected distribution. Visual diagnostics using Mahalanobis Q-Q plots showed that the empirical data departed markedly from the theoretical $\chi^2_p$ reference line, particularly in the upper tails. This pattern, characterized by a pronounced upward bend, was observed both globally and within the class-conditional plots for \texttt{is\_fair}, indicating that the non-normality was not confined to a single group. This heavy-tailed behavior is likely driven by naturally skewed variables such as \texttt{downloads}, \texttt{likes}, and \texttt{size}, whose extreme values inflate the Mahalanobis distances even after standardization.
 
-\textbf{Likely drivers.} The heaviest deviations coincide with variables that are naturally
-skewed and highly dispersed in this domain (e.g., \texttt{downloads}, \texttt{likes}, and
-\texttt{size}). Even after $z$–scoring, extreme observations inflate the robust Mahalanobis
-distances, consistent with long right tails.
-
-\textbf{Implications for LDA.} Classical LDA assumes (i) multivariate normality within each
-class and (ii) equal covariance matrices across classes. The QQ–plots provide clear evidence
-against (i), and the differing tail behavior between classes suggests that (ii) may also be
-questionable. Consequently, a standard LDA fit would risk biased boundaries and over–optimistic
-error estimates.
-
-\textbf{Recommended course.} If a linear boundary is desired, prefer \emph{regularized/shrinkage
-	LDA} (e.g., Ledoit–Wolf within–class covariance) and consider mild preprocessing (log or
-$\log(1+x)$ transforms for strictly positive features; winsorization of top quantiles). As a
-distribution–free baseline, \emph{penalized logistic regression} provides a linear separator
-without normality assumptions. If class scatters differ substantially, \emph{QDA with
-	regularization} or tree–based methods are more appropriate.
-
-\textbf{Summary.} The MVN assumption is \emph{not} supported for these features (globally nor
-within classes). Standard LDA is therefore not recommended without transformations and
-regularization; robust or nonparametric alternatives are better aligned with the observed data
-structure.
+The clear evidence against the within-class normality assumption—and potentially against the equality of covariance matrices—makes classical LDA an inappropriate choice, as its application would risk biased decision boundaries and overly optimistic performance estimates. Consequently, the multivariate normality (MVN) assumption was deemed unsupported for this dataset. This finding justified the methodological decision to forgo standard LDA in favor of more robust alternatives, such as regularized/shrinkage LDA or non-parametric classifiers, which are better aligned with the observed data structure.
 
 
 \paragraph{LDA}
@@ -507,14 +351,14 @@ Inspection of the linear discriminants $\delta_k(x)=x^\top A_k+b_k$ showed the l
 
 Overall, LDA with shrinkage produced a parsimonious, interpretable boundary, strong generalization (cross-validated accuracy $\approx0.93$), and coherent variable importance (Fig.~\ref{fig:lda-loadings}) highlighting performance and carbon-cost factors as the dominant discriminants. These outcomes justify LDA as a robust linear baseline; more complex models (e.g., QDA or non-linear kernels) would only be warranted if heteroscedasticity or curvature were demonstrably exploitable for additional gains.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=.72\linewidth]{assets/LDA-eigen_roc_test.png}
 	\caption{ROC curve on the test set (AUC $\approx 0.98$).}
 	\label{fig:lda-roc}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\begin{subfigure}{.48\linewidth}
 		\centering
@@ -533,7 +377,7 @@ Overall, LDA with shrinkage produced a parsimonious, interpretable boundary, str
 	\label{fig:lda-geom}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=.72\linewidth]{assets/LDA-eigen_loadings_abs_bar.png}
 	\caption{Absolute loadings on LD1 (averaged across classes). Performance and CO$_2$ dominate; size and downloads are secondary; likes is negligible.}
@@ -542,7 +386,7 @@ Overall, LDA with shrinkage produced a parsimonious, interpretable boundary, str
 
 
 \subsection{Results and Discussion}
-Table~\ref{tab:clf-compare} summarizes the out-of-sample performance. The linear
+Table~\ref{tab:compare} summarizes the out-of-sample performance. The linear
 baseline (LDA) achieved strong discrimination (AUC $=0.983$) with solid AP for the
 minority class (AP$_{\text{True}}=0.958$) and good accuracy ($0.919$). The
 non-linear models improved upon the baseline: SVM–RBF reached AUC $=0.991$,
@@ -564,11 +408,11 @@ thresholds can be tuned on the calibrated probabilities to trade specificity for
 sensitivity when detecting the positive (``fair'') class is mission-critical.
 
 
-\begin{table}[H]
+\begin{table}[htbp]
 	\centering
 	\sisetup{table-number-alignment=center, round-mode=places, round-precision=3, table-format=1.5}
 	\caption{Test performance and  accuracy cross-validated (CV). AP is Area Precision Recall}
-	\label{tab:perf-all}
+	\label{tab:compare}
 	\begin{threeparttable}
 		\begin{tabular}{l SS S S S}
 			\toprule
@@ -585,7 +429,7 @@ sensitivity when detecting the positive (``fair'') class is mission-critical.
 \end{table}
 
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\begin{subfigure}{.48\linewidth}
 		\centering
@@ -601,7 +445,7 @@ sensitivity when detecting the positive (``fair'') class is mission-critical.
 	\label{fig:pr-nonlinear}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\begin{subfigure}{.48\linewidth}
 		\centering
@@ -624,7 +468,7 @@ when model simplicity or margin-based robustness is desired. LDA remains valuabl
 as an interpretable baseline and for feature understanding via discriminant loadings.
 \section*{Conclusions}
 
-Following a thorough and multifaceted analysis of the dataset, the following fundamental conclusions have been drawn:
+Following a thorough and multifaceted analysis of the dataset, the following fundamental conclusions have been written :
 
 \begin{enumerate}
 	\item \textbf{The unsupervised data structure is dominated by popularity:} Both hierarchical and k-means clustering consistently revealed that the \texttt{downloads} and \texttt{likes} variables are the most discriminating factors. This indicates that the natural grouping of models on the platform corresponds to their usage and engagement levels, rather than a balance between their performance and environmental cost.

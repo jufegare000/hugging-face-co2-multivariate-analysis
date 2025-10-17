@@ -24,7 +24,9 @@ para instalar las dependencias se usa el comando:
 pip install -r requirements.txt
 ```
 
-## Reporte del proyecto
-Resultados del análisis puede verse en la siguiente ruta:
-[Components and factor analysis](assets/Multivariated_Data_Analysis.pdf)
-[Classification Analysis](assets/report/classification/document.pdf)
+## Reportes del proyecto
+Resultados del análisis pueden verse en las siguientes ruta:
+<br>
+- [Components and factor analysis](assets/Multivariated_Data_Analysis.pdf)
+<br>
+- [Classification Analysis](assets/report/classification/document.pdf)
