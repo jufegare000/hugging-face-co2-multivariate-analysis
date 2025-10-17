@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ```
 
 ## Reportes del proyecto
-Resultados del análisis pueden verse en las siguientes ruta:
+Resultados del análisis pueden verse en las siguientes rutas:
 <br>
 - [Components and factor analysis](assets/Multivariated_Data_Analysis.pdf)
 - [Classification Analysis](assets/report/classification/document.pdf)
